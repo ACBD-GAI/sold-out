@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
+
+<style>
+body {
+    font-family: Arial;
+    text-align: center;
+    padding: 15px;
+    background: #f4f6f8;
+}
+
+h2 {
+    font-size: 22px;
+}
+
+#reader {
+    width: 100%;
+    max-width: 350px;
+    margin: auto;
+}
+
+button {
+    padding: 14px;
+    font-size: 16px;
+    margin-top: 10px;
+    width: 90%;
+    background: #1976d2;
+    color: white;
+    border: none;
+    border-radius: 8px;
+}
+
+button:disabled {
+    background: gray;
+}
+
+#result {
+    margin-top: 20px;
+    font-size: 18px;
+    font-weight: bold;
+}
+</style>
+
+</head>
+
+<body>
+
+<h2>ACEBEDO LENS BARCODE SCANNER</h2>
+
+<div id="reader"></div>
+
+<label style="font-weight:bold; font-size:16px;">SI No.</label><br>
+
+<input 
+    type="text" 
+    id="siNo" 
+    placeholder="Enter SI No."
+    style="padding:12px;width:85%;font-size:16px;margin-top:5px;"
+    required
+/>
+
+<button id="scanBtn" onclick="startScan()">START SCAN</button>
+
+<p id="result">Ready</p>
+
+<script>
+
+let scanner = null;
+let isScanning = false;
+let currentSINo = "";   // ✅ SESSION SI NO
+
+const API_URL = "https://script.google.com/macros/s/AKfycbzZbDL8A9lIJL-zbtnAg4AzTJIFfOCuBKo8u3wuVowogBY8x1Fz1Wksb_g-57xLvVUFdA/exec";
+
+async function startScan() {
+
+    const result = document.getElementById("result");
+    const btn = document.getElementById("scanBtn");
+
+    // ✅ GET SI NO ONCE PER SESSION
+    currentSINo = document.getElementById("siNo").value.trim();
+
+    if (!currentSINo) {
+        result.innerHTML = "⚠ Please enter SI No. before scanning.";
+        return;
+    }
+
+    // SAFE RESET
+    if (scanner !== null) {
+        try {
+            await scanner.stop();
+            await scanner.clear();
+        } catch (e) {
+            console.log("Cleanup ignored:", e);
+        }
+        scanner = null;
+    }
+
+    btn.disabled = true;
+    result.innerHTML = "Starting camera...";
+
+    try {
+
+        const devices = await Html5Qrcode.getCameras();
+
+        if (!devices.length) {
+            result.innerHTML = "No camera found ❌";
+            btn.disabled = false;
+            return;
+        }
+
+        const cameraId =
+            devices.find(d =>
+                d.label &&
+                d.label.toLowerCase().includes("back")
+            )?.id || devices[0].id;
+
+        scanner = new Html5Qrcode("reader");
+
+        await scanner.start(
+            cameraId,
+            {
+                fps: 10,
+                qrbox: 250
+            },
+
+            async (decodedText) => {
+
+                if (isScanning) return;
+                isScanning = true;
+
+                result.innerHTML = "Processing...";
+
+                try {
+
+                    // STOP SCANNER SAFELY
+                    try {
+                        await scanner.stop();
+                        await scanner.clear();
+                    } catch (e) {
+                        console.log(e);
+                    }
+
+                    scanner = null;
+
+                    // FETCH + SI NO INCLUDED
+                    const res = await fetch(
+                        API_URL +
+                        "?barcode=" + encodeURIComponent(decodedText) +
+                        "&siNo=" + encodeURIComponent(currentSINo)
+                    );
+
+                    const text = await res.text();
+                    console.log("RAW RESPONSE:", text);
+
+                    let data;
+                    try {
+                        data = JSON.parse(text);
+                    } catch (e) {
+                        throw new Error("Invalid response: " + text);
+                    }
+
+                    // DUPLICATE
+                    if (data.status === "DUPLICATE") {
+
+                        result.innerHTML =
+                            "<span style='color:red;font-size:24px;font-weight:bold;'>⚠ ALREADY SCANNED</span><br><br>" +
+                            "<b>SI No:</b> " + currentSINo + "<br>" +
+                            "<b>Barcode:</b> " + decodedText + "<br>" +
+                            "<b>Lens type:</b> " + (data.colJ ?? "-") + "<br>" +
+                            "<b>Grade:</b> " + (data.colO ?? "-");
+
+                    }
+                    // FOUND
+                    else if (data.status === "FOUND") {
+
+                        result.innerHTML =
+                            "<span style='color:green;font-size:24px;font-weight:bold;'>✅ SCANNED SUCCESSFULLY</span><br><br>" +
+                            "<b>SI No:</b> " + currentSINo + "<br>" +
+                            "<b>Barcode:</b> " + decodedText + "<br>" +
+                            "<b>Lens type:</b> " + (data.colJ ?? "-") + "<br>" +
+                            "<b>Grade:</b> " + (data.colO ?? "-");
+
+                    }
+                    // NOT FOUND
+                    else {
+
+                        result.innerHTML =
+                            "<span style='color:red;font-size:24px;font-weight:bold;'>❌ NOT FOUND</span><br><br>" +
+                            "<b>SI No:</b> " + currentSINo + "<br>" +
+                            "<b>Barcode:</b> " + decodedText;
+
+                    }
+
+                } catch (err) {
+
+                    console.error(err);
+                    result.innerHTML = "ERROR ❌<br>" + err.message;
+
+                } finally {
+
+                    isScanning = false;
+                    btn.disabled = false;
+                }
+
+            }
+
+        );
+
+    } catch (err) {
+
+        console.error(err);
+
+        result.innerHTML =
+            "Cannot access camera.<br>Please allow camera permission.";
+
+        scanner = null;
+        btn.disabled = false;
+    }
+
+}
+
+</script>
+
+</body>
+</html>
