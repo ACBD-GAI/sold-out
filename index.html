@@ -61,62 +61,48 @@ style="padding:12px;width:85%;">
 <p id="result">Ready</p>
 <div id="searchResult"></div>
 
-<!-- 🔊 BEEP SOUND -->
-<audio id="beepSound"
-src="https://www.soundjay.com/button/beep-07.wav"
-preload="auto"></audio>
-
 <script>
 
 let scanner = null;
 let isScanning = false;
+
+let audioCtx = null;
 let audioUnlocked = false;
 
-const API_URL = "https://script.google.com/macros/s/AKfycbzjgBdfyMyF08wwqIWYcHzHCqr_3NtYUeogLTOCX1q3TZ7sHemkizMFyXUJC5GCI-FABQ/exec";
+document.addEventListener("click", () => {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    audioCtx.resume();
+    audioUnlocked = true;
+}, { once: true });
 
+function playBeep() {
+    if (!audioCtx || !audioUnlocked) return;
 
-// ================= AUDIO UNLOCK (IMPORTANT FIX) =================
-function unlockAudio() {
-    const beep = document.getElementById("beepSound");
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
 
-    beep.play().then(() => {
-        beep.pause();
-        beep.currentTime = 0;
-        audioUnlocked = true;
-    }).catch(() => {});
+    osc.type = "square";
+    osc.frequency.value = 800;
+    gain.gain.value = 0.2;
+
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+
+    osc.start();
+    osc.stop(audioCtx.currentTime + 0.12);
 }
 
-document.addEventListener("click", unlockAudio, { once: true });
-
-
-// ================= SOUND =================
-function playBeep() {
-    if (!audioUnlocked) return;
-
-    const beep = document.getElementById("beepSound");
-
-    try {
-        beep.currentTime = 0;
-        beep.play();
-    } catch (e) {
-        console.log("Sound blocked");
+function vibrateDevice() {
+    if (navigator.vibrate) {
+        navigator.vibrate([200, 100, 200]);
     }
 }
-
-
-// ================= VIBRATION =================
-function vibrateDevice() {
-    try {
-        if (navigator.vibrate) {
-            navigator.vibrate([200, 100, 200]);
-        }
-    } catch (e) {}
-}
-
 
 function getResult() {
     return document.getElementById("result");
 }
+
+const API_URL = "https://script.google.com/macros/s/AKfycby_HiUOSas5-BALU8PCyQDRbQ5rDVuJcmdwwL89DKE7JmFfPU7osmbRprG1jaor9_53dw/exec";
 
 
 // ================= START SCAN =================
@@ -131,10 +117,7 @@ async function startScan() {
     }
 
     if (scanner) {
-        try {
-            await scanner.stop();
-            await scanner.clear();
-        } catch (e) {}
+        try { await scanner.stop(); await scanner.clear(); } catch(e){}
         scanner = null;
     }
 
@@ -156,7 +139,6 @@ async function startScan() {
             await scanner.clear();
             scanner = null;
 
-            // 🔊 SOUND + 📳 VIBRATION
             playBeep();
             vibrateDevice();
 
@@ -166,14 +148,15 @@ async function startScan() {
             const res = await fetch(API_URL + "?barcode=" + safeCode + "&siNo=" + safeSi);
             const data = await res.json();
 
+            let colM = data.colM || "";   // ✅ NEW
             let lens = data.colJ || "";
             let desc = data.colO || "";
 
-            let details = lens
-                ? `<b>Lens:</b> ${lens}<br><b>Description:</b> ${desc}`
-                : `<b>Description:</b> ${desc}`;
+            let details =
+                `<b>Col M:</b> ${colM}<br>` +
+                (lens ? `<b>Lens:</b> ${lens}<br>` : "") +
+                `<b>Description:</b> ${desc}`;
 
-            // ================= FOUND =================
             if (data.status === "FOUND") {
 
                 result.innerHTML = `
@@ -198,7 +181,6 @@ async function startScan() {
                 }, 100);
             }
 
-            // ================= DUPLICATE =================
             else if (data.status === "DUPLICATE") {
 
                 result.innerHTML = `
@@ -213,7 +195,6 @@ async function startScan() {
                 `;
             }
 
-            // ================= NOT FOUND =================
             else {
                 result.innerHTML = "❌ NOT FOUND";
             }
@@ -224,7 +205,7 @@ async function startScan() {
 }
 
 
-// ================= CONFIRM SAVE =================
+// ================= CONFIRM =================
 async function confirmSave(code, siNo, ok) {
 
     const result = getResult();
@@ -237,22 +218,16 @@ async function confirmSave(code, siNo, ok) {
     const res = await fetch(API_URL + "?barcode=" + code + "&siNo=" + siNo);
     const data = await res.json();
 
+    let colM = data.colM || "";
     let lens = data.colJ || "";
     let desc = data.colO || "";
-
-    let details = lens
-        ? `Lens: ${lens}<br>Description: ${desc}`
-        : `Description: ${desc}`;
-
-    let time = data.timestamp
-        ? new Date(data.timestamp).toLocaleString()
-        : "";
 
     result.innerHTML = `
         <div class="card green">
             ✅ SAVED<br><br>
-            ${details}<br><br>
-            ${time}
+            <b>Col M:</b> ${colM}<br>
+            ${lens ? `<b>Lens:</b> ${lens}<br>` : ""}
+            <b>Description:</b> ${desc}
         </div>
     `;
 }
@@ -278,6 +253,7 @@ async function searchSI() {
 
         html += `<div style="border:1px solid #ccc;margin:5px;padding:8px;">
         #${index+1}<br>
+        Col M: ${i.colM}<br>
         ${i.lens ? "Lens: " + i.lens + "<br>" : ""}
         ${i.grade}<br>
         ${i.barcode}
