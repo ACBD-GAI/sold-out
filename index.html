@@ -29,11 +29,6 @@ button {
     border-radius: 8px;
 }
 
-#result, #searchResult {
-    margin-top: 15px;
-    font-weight: bold;
-}
-
 .card {
     padding: 12px;
     border-radius: 10px;
@@ -41,8 +36,12 @@ button {
 }
 
 .green { background: #d4f8d4; border: 2px solid green; }
-
 .red { background: #ffd6d6; border: 2px solid red; }
+
+#result, #searchResult {
+    margin-top: 15px;
+    font-weight: bold;
+}
 </style>
 </head>
 
@@ -71,25 +70,52 @@ preload="auto"></audio>
 
 let scanner = null;
 let isScanning = false;
+let audioUnlocked = false;
 
 const API_URL = "https://script.google.com/macros/s/AKfycbzjgBdfyMyF08wwqIWYcHzHCqr_3NtYUeogLTOCX1q3TZ7sHemkizMFyXUJC5GCI-FABQ/exec";
 
-function getResult() {
-    return document.getElementById("result");
+
+// ================= AUDIO UNLOCK (IMPORTANT FIX) =================
+function unlockAudio() {
+    const beep = document.getElementById("beepSound");
+
+    beep.play().then(() => {
+        beep.pause();
+        beep.currentTime = 0;
+        audioUnlocked = true;
+    }).catch(() => {});
 }
 
-// ================= BEEP =================
+document.addEventListener("click", unlockAudio, { once: true });
+
+
+// ================= SOUND =================
 function playBeep() {
+    if (!audioUnlocked) return;
+
     const beep = document.getElementById("beepSound");
-    beep.currentTime = 0;
-    beep.play();
+
+    try {
+        beep.currentTime = 0;
+        beep.play();
+    } catch (e) {
+        console.log("Sound blocked");
+    }
 }
+
 
 // ================= VIBRATION =================
 function vibrateDevice() {
-    if (navigator.vibrate) {
-        navigator.vibrate(200);
-    }
+    try {
+        if (navigator.vibrate) {
+            navigator.vibrate([200, 100, 200]);
+        }
+    } catch (e) {}
+}
+
+
+function getResult() {
+    return document.getElementById("result");
 }
 
 
@@ -130,8 +156,9 @@ async function startScan() {
             await scanner.clear();
             scanner = null;
 
-            playBeep();        // 🔊 SOUND
-            vibrateDevice();   // 📳 VIBRATION
+            // 🔊 SOUND + 📳 VIBRATION
+            playBeep();
+            vibrateDevice();
 
             const safeCode = encodeURIComponent(code);
             const safeSi = encodeURIComponent(siNo);
@@ -153,10 +180,12 @@ async function startScan() {
                     <div class="card green">
                         ✅ FOUND<br><br>
                         ${details}<br><br>
+
                         <button id="yesBtn"
                             onclick="confirmSave('${safeCode}','${safeSi}',true)">
                             YES
                         </button>
+
                         <button onclick="confirmSave('${safeCode}','${safeSi}',false)"
                             style="background:red;">
                             NO
@@ -164,11 +193,9 @@ async function startScan() {
                     </div>
                 `;
 
-                // 🔥 AUTO FOCUS YES BUTTON
                 setTimeout(() => {
-                    document.getElementById("yesBtn").focus();
+                    document.getElementById("yesBtn")?.focus();
                 }, 100);
-
             }
 
             // ================= DUPLICATE =================
@@ -178,6 +205,7 @@ async function startScan() {
                     <div class="card red">
                         ⚠ DUPLICATE<br><br>
                         ${details}<br><br>
+
                         <button onclick="confirmSave('${safeCode}','${safeSi}',false)">
                             OK
                         </button>
