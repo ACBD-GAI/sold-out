@@ -6,32 +6,67 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
 
 <style>
+
+/* ================= APP BACKGROUND ================= */
 body {
     font-family: Arial;
-    text-align: center;
-    padding: 15px;
-    background: #f4f6f8;
+    margin: 0;
+    background: #eef2f7;
 }
 
+/* ================= HEADER (APP STYLE) ================= */
+.header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 12px;
+    background: linear-gradient(135deg, #2196f3, #1976d2);
+    color: white;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+}
+
+.header img {
+    width: 40px;
+    height: 40px;
+    background: white;
+    border-radius: 8px;
+    padding: 3px;
+}
+
+/* ================= MAIN CARD ================= */
+.container {
+    padding: 15px;
+}
+
+/* ================= SCANNER BOX ================= */
 #reader {
     width: 100%;
-    max-width: 350px;
+    max-width: 360px;
     margin: auto;
-    border-radius: 12px;
+    border-radius: 15px;
     overflow: hidden;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.15);
 }
 
+/* ================= INPUT ================= */
 input {
-    padding: 12px;
-    width: 85%;
+    padding: 14px;
+    width: 100%;
     font-size: 16px;
-    border-radius: 10px;
-    border: 1px solid #ccc;
+    border-radius: 12px;
+    border: none;
+    margin-top: 12px;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.1);
 }
 
+/* ================= BUTTONS ================= */
 button {
     padding: 14px;
-    width: 90%;
+    width: 100%;
     margin-top: 10px;
     border: none;
     border-radius: 12px;
@@ -50,43 +85,55 @@ button {
     color: white;
 }
 
+/* ================= RESULT CARD ================= */
 .card {
-    padding: 14px;
-    border-radius: 12px;
+    padding: 15px;
+    border-radius: 15px;
     margin-top: 12px;
-    box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    background: white;
 }
 
-.green { background: #d4f8d4; border: 2px solid green; }
-.red { background: #ffd6d6; border: 2px solid red; }
+.green {
+    border-left: 6px solid #2ecc71;
+}
 
+.red {
+    border-left: 6px solid #e74c3c;
+}
+
+/* ================= TEXT ================= */
 #result, #searchResult {
     margin-top: 15px;
     font-weight: bold;
 }
+
 </style>
 </head>
 
 <body>
 
-<div style="text-align:center;">
-    <img 
-        src="https://drive.google.com/thumbnail?id=1tOeVr8yecFf_REL9zHznEh9Qs2clqVrt&sz=w500"
-        style="width:140px;margin-top:10px;margin-bottom:5px;"
-    >
-    <h2>📦 SCAN ITEM SYSTEM</h2>
+<!-- ================= HEADER ================= -->
+<div class="header">
+    <img src="https://drive.google.com/thumbnail?id=1tOeVr8yecFf_REL9zHznEh9Qs2clqVrt&sz=w200">
+    <h3 style="margin:0;">SCAN ITEM SYSTEM</h3>
 </div>
 
-<div id="reader"></div>
+<!-- ================= APP BODY ================= -->
+<div class="container">
 
-<input id="siNo" placeholder="Enter SI No">
+    <div id="reader"></div>
 
-<button class="btn-blue" onclick="startScan()">📷 START SCAN</button>
-<button class="btn-blue" onclick="searchSI()">🔍 SEARCH SI</button>
-<button class="btn-orange" onclick="refreshPage()">♻ REFRESH</button>
+    <input id="siNo" placeholder="Enter SI No">
 
-<p id="result">Ready</p>
-<div id="searchResult"></div>
+    <button class="btn-blue" onclick="startScan()">📷 START SCAN</button>
+    <button class="btn-blue" onclick="searchSI()">🔍 SEARCH SI</button>
+    <button class="btn-orange" onclick="refreshPage()">♻ REFRESH</button>
+
+    <p id="result">Ready</p>
+    <div id="searchResult"></div>
+
+</div>
 
 <script>
 
@@ -96,7 +143,7 @@ let isScanning = false;
 let tempCode = "";
 let tempSi = "";
 
-// ================= AUDIO =================
+/* ================= AUDIO ================= */
 let audioCtx = null;
 
 function initAudio() {
@@ -123,20 +170,20 @@ function beep() {
 }
 
 function vibrate() {
-    if (navigator.vibrate) navigator.vibrate([150, 80, 150]);
+    if (navigator.vibrate) navigator.vibrate([150,80,150]);
 }
 
 document.addEventListener("click", initAudio, { once: true });
 
 const API_URL = "https://script.google.com/macros/s/AKfycbyc8UjNFP2IVlzlXkLx-eqkdNTcNcOAo3NyPQ3BHumVF90TIgQv7-mZVwYxTEokOW5JGg/exec";
 
-// ================= UI RESET (IMPORTANT FIX) =================
+/* ================= UI RESET ================= */
 function clearUI() {
     document.getElementById("result").innerHTML = "Ready";
     document.getElementById("searchResult").innerHTML = "";
 }
 
-// ================= SCAN =================
+/* ================= SCAN ================= */
 async function startScan() {
 
     clearUI();
@@ -157,7 +204,6 @@ async function startScan() {
 
     let cameraId = devices[0].id;
 
-    // FORCE BACK CAMERA
     for (let i = 0; i < devices.length; i++) {
         const label = (devices[i].label || "").toLowerCase();
         if (label.includes("back") || label.includes("rear") || label.includes("environment")) {
@@ -183,7 +229,6 @@ async function startScan() {
 
             scanner = null;
 
-            // SOUND + VIBRATE
             beep();
             vibrate();
 
@@ -212,12 +257,12 @@ async function startScan() {
                         ✅ AVAILABLE<br><br>
                         ${details}<br><br>
 
-                        <button onclick="saveYes()" style="background:green;color:white;">
+                        <button onclick="saveYes()" class="btn-blue">
                             ADD TO SOLD?
                         </button>
 
-                        <button onclick="cancelNo()" style="background:red;color:white;">
-                            NO
+                        <button onclick="cancelNo()" class="btn-orange">
+                            CANCEL
                         </button>
                     </div>
                 `;
@@ -228,14 +273,18 @@ async function startScan() {
                 document.getElementById("result").innerHTML = `
                     <div class="card red">
                         ⚠ ALREADY SOLD<br><br>
-                        ${details}<br>
-                        <button onclick="cancelNo()">OK</button>
+                        ${details}<br><br>
+                        <button onclick="cancelNo()" class="btn-orange">OK</button>
                     </div>
                 `;
             }
 
             else {
-                document.getElementById("result").innerHTML = "❌ NOT FOUND";
+                document.getElementById("result").innerHTML = `
+                    <div class="card red">
+                        ❌ NOT FOUND
+                    </div>
+                `;
             }
 
             isScanning = false;
@@ -243,7 +292,7 @@ async function startScan() {
     );
 }
 
-// ================= SAVE =================
+/* ================= SAVE ================= */
 async function saveYes() {
 
     const res = await fetch(API_URL +
@@ -261,17 +310,12 @@ async function saveYes() {
     `;
 }
 
-// ================= SEARCH =================
+/* ================= SEARCH ================= */
 async function searchSI() {
 
     clearUI();
 
     const siNo = document.getElementById("siNo").value;
-
-    if (!siNo) {
-        document.getElementById("result").innerHTML = "⚠ Enter SI No";
-        return;
-    }
 
     const res = await fetch(API_URL +
         "?action=searchSI&siNo=" + encodeURIComponent(siNo));
@@ -281,7 +325,7 @@ async function searchSI() {
     const out = document.getElementById("searchResult");
 
     if (!data.items || data.items.length === 0) {
-        out.innerHTML = "No results";
+        out.innerHTML = "<div class='card'>No results</div>";
         return;
     }
 
@@ -295,12 +339,12 @@ async function searchSI() {
     `).join("");
 }
 
-// ================= CANCEL =================
+/* ================= CANCEL ================= */
 function cancelNo() {
     document.getElementById("result").innerHTML = "❌ CANCELLED";
 }
 
-// ================= REFRESH =================
+/* ================= REFRESH ================= */
 function refreshPage() {
     document.getElementById("siNo").value = "";
     clearUI();
