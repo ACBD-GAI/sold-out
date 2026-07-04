@@ -53,26 +53,21 @@ button:disabled {
 
 <div id="reader"></div>
 
-<label style="font-weight:bold; font-size:16px;">SI No.</label><br>
+<label style="font-weight:bold;">SI No.</label><br>
 
 <input 
     type="text" 
     id="siNo" 
     placeholder="Enter SI No."
     style="padding:12px;width:85%;font-size:16px;margin-top:5px;"
-    required
 />
 
-<button id="scanBtn" onclick="startScan()">START SCAN</button>
+<button onclick="startScan()" id="scanBtn">START SCAN</button>
 
-<button id="searchBtn" onclick="searchSI()">
-SEARCH SI NO
-</button>
-<button onclick="refreshPage()" style="background:#ff9800;">
-REFRESH
-</button>
+<button onclick="searchSI()">SEARCH SI NO</button>
 
-    
+<button onclick="refreshPage()" style="background:#ff9800;">REFRESH</button>
+
 <p id="result">Ready</p>
 
 <div id="searchResult"></div>
@@ -82,25 +77,25 @@ REFRESH
 let scanner = null;
 let isScanning = false;
 
-const API_URL = "https://script.google.com/macros/s/AKfycby6Rl_qOUVitHtbq9neALuMgHHO5HbuWtphBLUw-DzlAeZqrEBgeB_dksdq3PYRAglE/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbx0p6T7MS6QAoG5Q8dFXbBS2RAsUwzd9kawJltUWP568A0a6XMfB4d0ShqlGW7XQq6egg/exec";
 
 
-// =========================
-// QR SCAN FUNCTION
-// =========================
+// =====================
+// START SCAN
+// =====================
 async function startScan() {
 
     const result = document.getElementById("result");
     const btn = document.getElementById("scanBtn");
 
-    const currentSINo = document.getElementById("siNo").value.trim();
+    const siNo = document.getElementById("siNo").value.trim();
 
-    if (!currentSINo) {
-        result.innerHTML = "⚠ Please enter SI No. before scanning.";
+    if (!siNo) {
+        result.innerHTML = "⚠ Please enter SI No.";
         return;
     }
 
-    if (scanner !== null) {
+    if (scanner) {
         try {
             await scanner.stop();
             await scanner.clear();
@@ -116,16 +111,14 @@ async function startScan() {
         const devices = await Html5Qrcode.getCameras();
 
         if (!devices.length) {
-            result.innerHTML = "No camera found ❌";
+            result.innerHTML = "No camera found";
             btn.disabled = false;
             return;
         }
 
         const cameraId =
-            devices.find(d =>
-                d.label &&
-                d.label.toLowerCase().includes("back")
-            )?.id || devices[0].id;
+            devices.find(d => d.label && d.label.toLowerCase().includes("back"))?.id
+            || devices[0].id;
 
         scanner = new Html5Qrcode("reader");
 
@@ -149,30 +142,19 @@ async function startScan() {
                     const res = await fetch(
                         API_URL +
                         "?barcode=" + encodeURIComponent(decodedText) +
-                        "&siNo=" + encodeURIComponent(currentSINo)
+                        "&siNo=" + encodeURIComponent(siNo)
                     );
 
                     const data = await res.json();
 
                     if (data.status === "DUPLICATE") {
-
-                        result.innerHTML =
-                            "<span style='color:red;font-size:24px;'>⚠ ALREADY SCANNED</span><br>" +
-                            "Barcode: " + decodedText;
-
-                    } 
+                        result.innerHTML = "⚠ ALREADY SCANNED";
+                    }
                     else if (data.status === "FOUND") {
-
-                        result.innerHTML =
-                            "<span style='color:green;font-size:24px;'>✅ SOLD</span><br>" +
-                            "Barcode: " + decodedText;
-
-                    } 
+                        result.innerHTML = "✅ SUCCESS";
+                    }
                     else {
-
-                        result.innerHTML =
-                            "<span style='color:red;font-size:24px;'>❌ NOT FOUND</span><br>" +
-                            "Barcode: " + decodedText;
+                        result.innerHTML = "❌ NOT FOUND";
                     }
 
                 } catch (err) {
@@ -186,22 +168,22 @@ async function startScan() {
         );
 
     } catch (err) {
-        result.innerHTML = "Cannot access camera.";
+        result.innerHTML = "Camera error ❌";
         btn.disabled = false;
     }
 }
 
 
-// =========================
-// SEARCH SI NO FUNCTION
-// =========================
+// =====================
+// SEARCH SI NO
+// =====================
 async function searchSI() {
 
     const siNo = document.getElementById("siNo").value.trim();
     const output = document.getElementById("searchResult");
 
     if (!siNo) {
-        output.innerHTML = "⚠ Please enter SI No.";
+        output.innerHTML = "⚠ Enter SI No";
         return;
     }
 
@@ -217,25 +199,23 @@ async function searchSI() {
         const data = await res.json();
 
         if (!data.success) {
-            output.innerHTML = "❌ " + data.error;
+            output.innerHTML = data.error;
             return;
         }
 
         if (data.items.length === 0) {
-            output.innerHTML = "❌ No items found.";
+            output.innerHTML = "No results found";
             return;
         }
 
-        let html = `<b>SI No:</b> ${siNo}<br>`;
-        html += `<b>Total Items:</b> ${data.count}<br><br>`;
+        let html = `<b>SI No:</b> ${siNo}<br><br>`;
 
         data.items.forEach((item, i) => {
             html += `
-                <div style="border:1px solid #ccc;padding:10px;margin:5px;">
+                <div style="border:1px solid #ccc;margin:5px;padding:10px;">
                     <b>#${i+1}</b><br>
-                    Barcode: ${item.barcode}<br>
-                    Lens: ${item.lens}<br>
-                    Grade: ${item.grade}
+                    ${item.barcode}<br>
+                    ${item.lens} | ${item.grade}
                 </div>
             `;
         });
@@ -247,7 +227,27 @@ async function searchSI() {
     }
 }
 
-  
+
+// =====================
+// REFRESH BUTTON
+// =====================
+function refreshPage() {
+
+    document.getElementById("siNo").value = "";
+    document.getElementById("result").innerHTML = "Ready";
+    document.getElementById("searchResult").innerHTML = "";
+
+    isScanning = false;
+
+    if (scanner) {
+        try {
+            scanner.stop();
+            scanner.clear();
+        } catch (e) {}
+        scanner = null;
+    }
+}
+
 </script>
 
 </body>
