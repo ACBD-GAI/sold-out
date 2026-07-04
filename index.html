@@ -167,7 +167,7 @@ async function startScan() {
                     if (data.status === "DUPLICATE") {
 
                         result.innerHTML =
-                            "<span style='color:red;font-size:24px;font-weight:bold;'>⚠ SOLD</span><br><br>" +
+                            "<span style='color:red;font-size:24px;font-weight:bold;'>⚠ ALREADY SCANNED</span><br><br>" +
                             "<b>SI No:</b> " + (data.siNo ?? "-") + "<br>" +
                             "<b>Barcode:</b> " + decodedText + "<br>" +
                             "<b>Lens type:</b> " + (data.colJ ?? "-") + "<br>" +
@@ -227,3 +227,6 @@ async function startScan() {
 
 </body>
 </html>
+
+
+what is the error
