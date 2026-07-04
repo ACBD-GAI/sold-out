@@ -57,53 +57,77 @@ style="padding:12px;width:85%;">
 let scanner = null;
 let isScanning = false;
 
-const API_URL = "https://script.google.com/macros/s/AKfycbx5vV4L97w4ZRJs6IaSEpJgEVC_6gMcYm5ugneO8EN0pirDkzSKeY2O7RgXg__1UR702A/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbzjgBdfyMyF08wwqIWYcHzHCqr_3NtYUeogLTOCX1q3TZ7sHemkizMFyXUJC5GCI-FABQ/exec";
+
+function getResult() {
+    return document.getElementById("result");
+}
 
 
-// ================= SCAN =================
+// ================= START SCAN =================
 async function startScan() {
 
     const siNo = document.getElementById("siNo").value.trim();
-    const result = document.getElementById("result");
+    const result = getResult();
 
-    if (!siNo) return result.innerHTML = "⚠ Enter SI No";
+    if (!siNo) {
+        result.innerHTML = "⚠ Enter SI No";
+        return;
+    }
 
     if (scanner) {
-        await scanner.stop();
-        scanner.clear();
+        try {
+            await scanner.stop();
+            await scanner.clear();
+        } catch (e) {}
         scanner = null;
     }
 
     const devices = await Html5Qrcode.getCameras();
 
-    let cameraId = devices[devices.length - 1].id;
+    if (!devices.length) {
+        result.innerHTML = "No camera found ❌";
+        return;
+    }
+
+    const cameraId = devices[devices.length - 1].id;
 
     scanner = new Html5Qrcode("reader");
 
-    scanner.start(cameraId, { fps: 10, qrbox: 250 }, async (code) => {
+    await scanner.start(
+        cameraId,
+        { fps: 10, qrbox: 250 },
 
-        if (isScanning) return;
-        isScanning = true;
+        async (code) => {
 
-        // STOP SCANNER
-        await scanner.stop();
-        scanner.clear();
-        scanner = null;
+            if (isScanning) return;
+            isScanning = true;
 
-        result.innerHTML = `
-        <div>
-            ADD TO SOLD?<br><br>
-            <button onclick="confirmSave('${code}','${siNo}',true)">YES</button>
-            <button onclick="confirmSave('${code}','${siNo}',false)" style="background:red;">NO</button>
-        </div>`;
+            try {
+                await scanner.stop();
+                await scanner.clear();
+                scanner = null;
+            } catch (e) {}
 
-        isScanning = false;
-    });
+            const safeCode = encodeURIComponent(code);
+            const safeSi = encodeURIComponent(siNo);
+
+            getResult().innerHTML = `
+                ADD TO SOLD?<br><br>
+                <button onclick="confirmSave('${safeCode}','${safeSi}',true)">YES</button>
+                <button onclick="confirmSave('${safeCode}','${safeSi}',false)" style="background:red;">NO</button>
+            `;
+
+            isScanning = false;
+        }
+    );
 }
 
 
 // ================= CONFIRM =================
 async function confirmSave(code, siNo, ok) {
+
+    const result = getResult();
 
     if (!ok) {
         result.innerHTML = "❌ CANCELLED";
@@ -141,7 +165,10 @@ async function searchSI() {
     const res = await fetch(API_URL + "?action=searchSI&siNo=" + siNo);
     const data = await res.json();
 
-    if (!data.items.length) return out.innerHTML = "No results";
+    if (!data.items.length) {
+        out.innerHTML = "No results";
+        return;
+    }
 
     let html = "";
 
