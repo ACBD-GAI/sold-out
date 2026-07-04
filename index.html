@@ -219,6 +219,7 @@ async function startScan() {
                     <div class="card green">
                         ✅ AVAILABLE<br><br>
                         <b>${colO}</b><br>
+                        <b>${i.barcode}</b><br>
                         ${colJ ? `<small>${colJ}</small><br>` : ""}<br>
 
                         <button id="saveBtn" class="btn-blue" onclick="saveYes()">
@@ -238,6 +239,7 @@ async function startScan() {
                     <div class="card red">
                         ⚠ ALREADY SOLD<br><br>
                         <b>${colO}</b><br>
+                        <b>${i.barcode}</b><br>
                         ${colJ ? `<small>${colJ}</small>` : ""}
                     </div>
                 `;
@@ -282,6 +284,7 @@ async function saveYes() {
         <div class="card green">
             ✅ ${data.status}<br><br>
             <b>${colO}</b><br>
+            <b>${i.barcode}</b><br>
             ${colJ ? `<small>${colJ}</small>` : ""}
         </div>
     `;
