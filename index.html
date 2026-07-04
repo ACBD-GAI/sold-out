@@ -13,16 +13,18 @@ body {
     background: #eef2f7;
 }
 
+/* HEADER */
 .header {
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 10px;
     padding: 12px;
-    background: linear-gradient(135deg,#2196f3,#1976d2);
+    background: linear-gradient(135deg, #2196f3, #1976d2);
     color: white;
     position: sticky;
     top: 0;
+    z-index: 1000;
 }
 
 .header img {
@@ -33,55 +35,71 @@ body {
     padding: 3px;
 }
 
+/* CONTAINER */
 .container {
     padding: 15px;
 }
 
+/* SCANNER */
 #reader {
     width: 100%;
     max-width: 360px;
     margin: auto;
+    border-radius: 15px;
+    overflow: hidden;
 }
 
+/* INPUT */
 input {
     padding: 14px;
     width: 100%;
     font-size: 16px;
-    border-radius: 10px;
+    border-radius: 12px;
     border: none;
     margin-top: 12px;
 }
 
+/* BUTTONS */
 button {
     padding: 14px;
     width: 100%;
     margin-top: 10px;
     border: none;
-    border-radius: 10px;
+    border-radius: 12px;
     font-weight: bold;
+    cursor: pointer;
 }
 
-.btn-blue { background:#1976d2;color:white; }
-.btn-orange { background:#ff5722;color:white; }
+.btn-blue {
+    background: #1976d2;
+    color: white;
+}
 
+.btn-orange {
+    background: #ff5722;
+    color: white;
+}
+
+/* CARD */
 .card {
     padding: 15px;
+    border-radius: 15px;
+    margin-top: 12px;
     background: white;
-    margin-top: 10px;
-    border-radius: 12px;
 }
 
-.green { border-left:5px solid green; }
-.red { border-left:5px solid red; }
+.green { border-left: 6px solid #2ecc71; }
+.red { border-left: 6px solid #e74c3c; }
 
 </style>
 </head>
 
 <body>
 
+<!-- HEADER -->
 <div class="header">
     <img src="https://drive.google.com/thumbnail?id=1tOeVr8yecFf_REL9zHznEh9Qs2clqVrt&sz=w200">
-    <h3>SCAN ITEM SYSTEM</h3>
+    <h3 style="margin:0;">SCAN ITEM SYSTEM</h3>
 </div>
 
 <div class="container">
@@ -90,9 +108,9 @@ button {
 
     <input id="siNo" placeholder="Enter SI No">
 
-    <button class="btn-blue" onclick="startScan()">START SCAN</button>
-    <button class="btn-blue" onclick="searchSI()">SEARCH SI</button>
-    <button class="btn-orange" onclick="refreshPage()">REFRESH</button>
+    <button class="btn-blue" onclick="startScan()">📷 START SCAN</button>
+    <button class="btn-blue" onclick="searchSI()">🔍 SEARCH SI</button>
+    <button class="btn-orange" onclick="refreshPage()">♻ REFRESH</button>
 
     <p id="result">Ready</p>
     <div id="searchResult"></div>
@@ -101,136 +119,196 @@ button {
 
 <script>
 
-let scanner=null;
-let isScanning=false;
-let isSaving=false;
+let scanner = null;
+let isScanning = false;
+let isSaving = false;
 
-let tempCode="";
-let tempSi="";
+let tempCode = "";
+let tempSi = "";
 
-/* CHANGE THIS */
-const API_URL="https://script.google.com/macros/s/AKfycbzFmz2Lu8i2sD8mTx87Y5oYi_pAKFKehlkczdDFOYVaLurLimFa6VAIKiN0B42nhyTRPQ/exec";
+/* AUDIO */
+let audioCtx = null;
 
-/* HELPERS */
-function buildDetails(row){
-    let j=row[9]||"";
-    let m=row[12]||"";
-    let o=row[14]||"";
-    let html="";
-    if(j)html+=`<b>J:</b>${j}<br>`;
-    if(m)html+=`<b>M:</b>${m}<br>`;
-    if(o)html+=`<b>Desc:</b>${o}<br>`;
-    return html;
+function initAudio() {
+    if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+}
+
+function beep() {
+    initAudio();
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+
+    osc.type = "square";
+    osc.frequency.value = 900;
+    gain.gain.value = 0.15;
+
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+
+    osc.start();
+    osc.stop(audioCtx.currentTime + 0.12);
+}
+
+function vibrate() {
+    if (navigator.vibrate) navigator.vibrate([150,80,150]);
+}
+
+document.addEventListener("click", initAudio, { once: true });
+
+const API_URL = "https://script.google.com/macros/s/AKfycbynXz-NO_Dz540A1X-ZTuraAuizkZSJVu20wIjz0EhM8DnRQkHxK12VXsMFJZT3bUtL0w/exec";
+
+/* RESET UI */
+function clearUI() {
+    document.getElementById("result").innerHTML = "Ready";
+    document.getElementById("searchResult").innerHTML = "";
 }
 
 /* SCAN */
-async function startScan(){
+async function startScan() {
 
-    const siNo=document.getElementById("siNo").value;
-    if(!siNo)return alert("Enter SI No");
+    clearUI();
 
-    const devices=await Html5Qrcode.getCameras();
-    let cam=devices[0].id;
+    const siNo = document.getElementById("siNo").value;
+    if (!siNo) return alert("Enter SI No");
 
-    for(let d of devices){
-        if((d.label||"").toLowerCase().includes("back")){
-            cam=d.id;break;
+    const devices = await Html5Qrcode.getCameras();
+
+    let cameraId = devices[0].id;
+    for (let d of devices) {
+        const label = (d.label || "").toLowerCase();
+        if (label.includes("back") || label.includes("rear")) {
+            cameraId = d.id;
+            break;
         }
     }
 
-    scanner=new Html5Qrcode("reader");
+    scanner = new Html5Qrcode("reader");
 
-    await scanner.start(cam,{fps:10,qrbox:250},async(code)=>{
+    await scanner.start(
+        cameraId,
+        { fps: 10, qrbox: 250 },
+        async (code) => {
 
-        if(isScanning)return;
-        isScanning=true;
+            if (isScanning) return;
+            isScanning = true;
 
-        await scanner.stop();
-        await scanner.clear();
+            await scanner.stop();
+            await scanner.clear();
+            scanner = null;
 
-        tempCode=code;
-        tempSi=siNo;
+            beep();
+            vibrate();
 
-        const res=await fetch(API_URL+
-        "?action=check&barcode="+code);
+            tempCode = code;
+            tempSi = siNo;
 
-        const data=await res.json();
-        let row=data.row||[];
+            const res = await fetch(API_URL +
+                "?action=check&barcode=" + encodeURIComponent(code));
 
-        if(data.status==="FOUND"){
+            const data = await res.json();
 
-            document.getElementById("result").innerHTML=`
-            <div class="card green">
-                AVAILABLE<br><br>
-                ${buildDetails(row)}
+            let row = data.row || [];
+            let colJ = row[9] || "";
+            let colO = row[14] || "";
 
-                <button onclick="saveYes()" class="btn-blue">SAVE</button>
-            </div>`;
+            if (data.status === "FOUND") {
+
+                document.getElementById("result").innerHTML = `
+                    <div class="card green">
+                        ✅ AVAILABLE<br><br>
+                        <b>${colO}</b><br><br>
+
+                        <button id="saveBtn" class="btn-blue" onclick="saveYes()">
+                            ADD TO SOLD
+                        </button>
+
+                        <button class="btn-orange" onclick="cancelNo()">
+                            CANCEL
+                        </button>
+                    </div>
+                `;
+            }
+
+            else if (data.status === "DUPLICATE") {
+                document.getElementById("result").innerHTML = `
+                    <div class="card red">
+                        ⚠ ALREADY SOLD
+                    </div>
+                `;
+            }
+
+            else {
+                document.getElementById("result").innerHTML = "❌ NOT FOUND";
+            }
+
+            isScanning = false;
         }
-
-        else if(data.status==="DUPLICATE"){
-            document.getElementById("result").innerHTML=`
-            <div class="card red">
-                ALREADY SOLD<br><br>
-                ${buildDetails(row)}
-            </div>`;
-        }
-
-        else{
-            document.getElementById("result").innerHTML="NOT FOUND";
-        }
-
-        isScanning=false;
-    });
+    );
 }
 
-/* SAVE */
-async function saveYes(){
+/* SAVE (NO DOUBLE CLICK) */
+async function saveYes() {
 
-    if(isSaving)return;
-    isSaving=true;
+    if (isSaving) return;
+    isSaving = true;
 
-    const res=await fetch(API_URL+
-    "?action=save&barcode="+tempCode+
-    "&siNo="+tempSi);
+    document.getElementById("saveBtn").disabled = true;
+    document.getElementById("result").innerHTML = "⏳ Saving...";
 
-    const data=await res.json();
+    const res = await fetch(API_URL +
+        "?action=save&barcode=" + encodeURIComponent(tempCode) +
+        "&siNo=" + encodeURIComponent(tempSi));
 
-    document.getElementById("result").innerHTML=`
-    <div class="card green">
-        ${data.status}
-    </div>`;
+    const data = await res.json();
 
-    isSaving=false;
+    document.getElementById("result").innerHTML = `
+        <div class="card green">
+            ✅ ${data.status}
+        </div>
+    `;
+
+    isSaving = false;
 }
 
 /* SEARCH */
-async function searchSI(){
+async function searchSI() {
 
-    const siNo=document.getElementById("siNo").value;
+    clearUI();
 
-    const res=await fetch(API_URL+
-    "?action=searchSI&siNo="+siNo);
+    const siNo = document.getElementById("siNo").value;
 
-    const data=await res.json();
+    const res = await fetch(API_URL +
+        "?action=searchSI&siNo=" + encodeURIComponent(siNo));
 
-    document.getElementById("searchResult").innerHTML=
-    (data.items||[]).map((i,x)=>`
+    const data = await res.json();
+
+    const out = document.getElementById("searchResult");
+
+    if (!data.items?.length) {
+        out.innerHTML = "No results";
+        return;
+    }
+
+    out.innerHTML = data.items.map((i, idx) => `
         <div class="card">
-            #${x+1}<br>
-            ${i.colJ?`J:${i.colJ}<br>`:""}
-            ${i.colM?`M:${i.colM}<br>`:""}
-            ${i.colO?`O:${i.colO}<br>`:""}
+            #${idx+1}<br>
+            <b>${i.colO}</b><br>
             ${i.barcode}
         </div>
     `).join("");
 }
 
+/* CANCEL */
+function cancelNo() {
+    document.getElementById("result").innerHTML = "❌ CANCELLED";
+}
+
 /* REFRESH */
-function refreshPage(){
-    document.getElementById("siNo").value="";
-    document.getElementById("result").innerHTML="Ready";
-    document.getElementById("searchResult").innerHTML="";
+function refreshPage() {
+    document.getElementById("siNo").value = "";
+    clearUI();
 }
 
 </script>
