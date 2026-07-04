@@ -13,18 +13,16 @@ body {
     background: #eef2f7;
 }
 
-/* HEADER */
 .header {
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 10px;
     padding: 12px;
-    background: linear-gradient(135deg, #2196f3, #1976d2);
+    background: linear-gradient(135deg,#2196f3,#1976d2);
     color: white;
     position: sticky;
     top: 0;
-    z-index: 1000;
 }
 
 .header img {
@@ -35,71 +33,55 @@ body {
     padding: 3px;
 }
 
-/* CONTAINER */
 .container {
     padding: 15px;
 }
 
-/* SCANNER */
 #reader {
     width: 100%;
     max-width: 360px;
     margin: auto;
-    border-radius: 15px;
-    overflow: hidden;
 }
 
-/* INPUT */
 input {
     padding: 14px;
     width: 100%;
     font-size: 16px;
-    border-radius: 12px;
+    border-radius: 10px;
     border: none;
     margin-top: 12px;
 }
 
-/* BUTTONS */
 button {
     padding: 14px;
     width: 100%;
     margin-top: 10px;
     border: none;
-    border-radius: 12px;
+    border-radius: 10px;
     font-weight: bold;
-    cursor: pointer;
 }
 
-.btn-blue {
-    background: #1976d2;
-    color: white;
-}
+.btn-blue { background:#1976d2;color:white; }
+.btn-orange { background:#ff5722;color:white; }
 
-.btn-orange {
-    background: #ff5722;
-    color: white;
-}
-
-/* CARD */
 .card {
     padding: 15px;
-    border-radius: 15px;
-    margin-top: 12px;
     background: white;
+    margin-top: 10px;
+    border-radius: 12px;
 }
 
-.green { border-left: 6px solid #2ecc71; }
-.red { border-left: 6px solid #e74c3c; }
+.green { border-left:5px solid green; }
+.red { border-left:5px solid red; }
 
 </style>
 </head>
 
 <body>
 
-<!-- HEADER -->
 <div class="header">
     <img src="https://drive.google.com/thumbnail?id=1tOeVr8yecFf_REL9zHznEh9Qs2clqVrt&sz=w200">
-    <h3 style="margin:0;">SCAN ITEM SYSTEM</h3>
+    <h3>SCAN ITEM SYSTEM</h3>
 </div>
 
 <div class="container">
@@ -108,9 +90,9 @@ button {
 
     <input id="siNo" placeholder="Enter SI No">
 
-    <button class="btn-blue" onclick="startScan()">📷 START SCAN</button>
-    <button class="btn-blue" onclick="searchSI()">🔍 SEARCH SI</button>
-    <button class="btn-orange" onclick="refreshPage()">♻ REFRESH</button>
+    <button class="btn-blue" onclick="startScan()">START SCAN</button>
+    <button class="btn-blue" onclick="searchSI()">SEARCH SI</button>
+    <button class="btn-orange" onclick="refreshPage()">REFRESH</button>
 
     <p id="result">Ready</p>
     <div id="searchResult"></div>
@@ -119,222 +101,136 @@ button {
 
 <script>
 
-let scanner = null;
-let isScanning = false;
-let isSaving = false;
+let scanner=null;
+let isScanning=false;
+let isSaving=false;
 
-let tempCode = "";
-let tempSi = "";
+let tempCode="";
+let tempSi="";
 
-/* AUDIO */
-let audioCtx = null;
+/* CHANGE THIS */
+const API_URL="https://script.google.com/macros/s/AKfycbzFmz2Lu8i2sD8mTx87Y5oYi_pAKFKehlkczdDFOYVaLurLimFa6VAIKiN0B42nhyTRPQ/exec";
 
-function initAudio() {
-    if (!audioCtx) {
-        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    }
-}
-
-function beep() {
-    initAudio();
-    const osc = audioCtx.createOscillator();
-    const gain = audioCtx.createGain();
-
-    osc.type = "square";
-    osc.frequency.value = 900;
-    gain.gain.value = 0.15;
-
-    osc.connect(gain);
-    gain.connect(audioCtx.destination);
-
-    osc.start();
-    osc.stop(audioCtx.currentTime + 0.12);
-}
-
-function vibrate() {
-    if (navigator.vibrate) navigator.vibrate([150,80,150]);
-}
-
-document.addEventListener("click", initAudio, { once: true });
-
-const API_URL = "https://script.google.com/macros/s/AKfycbzsvzaPt_W4W-jjbypJw1mnbfEOKszwHMJS_mdreiq_yIJedRiWQW1Fm6AM5KDIh64YFw/exec";
-
-/* ================= HELPERS ================= */
-function buildDetails(row) {
-
-    let colJ = row[9] || "";
-    let colM = row[12] || "";
-    let colO = row[14] || "";
-
-    let html = "";
-
-    if (colJ) html += `<b>Col J:</b> ${colJ}<br>`;
-    if (colM) html += `<b>Col M:</b> ${colM}<br>`;
-    if (colO) html += `<b>Description:</b> ${colO}<br>`;
-
+/* HELPERS */
+function buildDetails(row){
+    let j=row[9]||"";
+    let m=row[12]||"";
+    let o=row[14]||"";
+    let html="";
+    if(j)html+=`<b>J:</b>${j}<br>`;
+    if(m)html+=`<b>M:</b>${m}<br>`;
+    if(o)html+=`<b>Desc:</b>${o}<br>`;
     return html;
 }
 
-/* RESET */
-function clearUI() {
-    document.getElementById("result").innerHTML = "Ready";
-    document.getElementById("searchResult").innerHTML = "";
-}
-
 /* SCAN */
-async function startScan() {
+async function startScan(){
 
-    clearUI();
+    const siNo=document.getElementById("siNo").value;
+    if(!siNo)return alert("Enter SI No");
 
-    const siNo = document.getElementById("siNo").value;
-    if (!siNo) return alert("Enter SI No");
+    const devices=await Html5Qrcode.getCameras();
+    let cam=devices[0].id;
 
-    const devices = await Html5Qrcode.getCameras();
-
-    let cameraId = devices[0].id;
-    for (let d of devices) {
-        const label = (d.label || "").toLowerCase();
-        if (label.includes("back") || label.includes("rear")) {
-            cameraId = d.id;
-            break;
+    for(let d of devices){
+        if((d.label||"").toLowerCase().includes("back")){
+            cam=d.id;break;
         }
     }
 
-    scanner = new Html5Qrcode("reader");
+    scanner=new Html5Qrcode("reader");
 
-    await scanner.start(
-        cameraId,
-        { fps: 10, qrbox: 250 },
-        async (code) => {
+    await scanner.start(cam,{fps:10,qrbox:250},async(code)=>{
 
-            if (isScanning) return;
-            isScanning = true;
+        if(isScanning)return;
+        isScanning=true;
 
-            await scanner.stop();
-            await scanner.clear();
-            scanner = null;
+        await scanner.stop();
+        await scanner.clear();
 
-            beep();
-            vibrate();
+        tempCode=code;
+        tempSi=siNo;
 
-            tempCode = code;
-            tempSi = siNo;
+        const res=await fetch(API_URL+
+        "?action=check&barcode="+code);
 
-            const res = await fetch(API_URL +
-                "?action=check&barcode=" + encodeURIComponent(code));
+        const data=await res.json();
+        let row=data.row||[];
 
-            const data = await res.json();
+        if(data.status==="FOUND"){
 
-            let row = data.row || [];
-            let details = buildDetails(row);
+            document.getElementById("result").innerHTML=`
+            <div class="card green">
+                AVAILABLE<br><br>
+                ${buildDetails(row)}
 
-            if (data.status === "FOUND") {
-
-                document.getElementById("result").innerHTML = `
-                    <div class="card green">
-                        ✅ AVAILABLE<br><br>
-                        ${details}
-
-                        <button id="saveBtn" class="btn-blue" onclick="saveYes()">
-                            ADD TO SOLD
-                        </button>
-
-                        <button class="btn-orange" onclick="cancelNo()">
-                            CANCEL
-                        </button>
-                    </div>
-                `;
-            }
-
-            else if (data.status === "DUPLICATE") {
-
-                document.getElementById("result").innerHTML = `
-                    <div class="card red">
-                        ⚠ ALREADY SOLD<br><br>
-                        ${details}
-                    </div>
-                `;
-            }
-
-            else {
-                document.getElementById("result").innerHTML = `
-                    <div class="card red">
-                        ❌ NOT FOUND
-                    </div>
-                `;
-            }
-
-            isScanning = false;
+                <button onclick="saveYes()" class="btn-blue">SAVE</button>
+            </div>`;
         }
-    );
+
+        else if(data.status==="DUPLICATE"){
+            document.getElementById("result").innerHTML=`
+            <div class="card red">
+                ALREADY SOLD<br><br>
+                ${buildDetails(row)}
+            </div>`;
+        }
+
+        else{
+            document.getElementById("result").innerHTML="NOT FOUND";
+        }
+
+        isScanning=false;
+    });
 }
 
 /* SAVE */
-async function saveYes() {
+async function saveYes(){
 
-    if (isSaving) return;
-    isSaving = true;
+    if(isSaving)return;
+    isSaving=true;
 
-    document.getElementById("saveBtn").disabled = true;
-    document.getElementById("result").innerHTML = "⏳ Saving...";
+    const res=await fetch(API_URL+
+    "?action=save&barcode="+tempCode+
+    "&siNo="+tempSi);
 
-    const res = await fetch(API_URL +
-        "?action=save&barcode=" + encodeURIComponent(tempCode) +
-        "&siNo=" + encodeURIComponent(tempSi));
+    const data=await res.json();
 
-    const data = await res.json();
+    document.getElementById("result").innerHTML=`
+    <div class="card green">
+        ${data.status}
+    </div>`;
 
-    let row = data.row || [];
-
-    document.getElementById("result").innerHTML = `
-        <div class="card green">
-            ✅ ${data.status}<br><br>
-            ${buildDetails(row)}
-        </div>
-    `;
-
-    isSaving = false;
+    isSaving=false;
 }
 
 /* SEARCH */
-async function searchSI() {
+async function searchSI(){
 
-    clearUI();
+    const siNo=document.getElementById("siNo").value;
 
-    const siNo = document.getElementById("siNo").value;
+    const res=await fetch(API_URL+
+    "?action=searchSI&siNo="+siNo);
 
-    const res = await fetch(API_URL +
-        "?action=searchSI&siNo=" + encodeURIComponent(siNo));
+    const data=await res.json();
 
-    const data = await res.json();
-
-    const out = document.getElementById("searchResult");
-
-    if (!data.items?.length) {
-        out.innerHTML = "<div class='card'>No results</div>";
-        return;
-    }
-
-    out.innerHTML = data.items.map((i, idx) => `
+    document.getElementById("searchResult").innerHTML=
+    (data.items||[]).map((i,x)=>`
         <div class="card">
-            #${idx+1}<br>
-            ${i.colJ ? `<b>Col J:</b> ${i.colJ}<br>` : ""}
-            ${i.colM ? `<b>Col M:</b> ${i.colM}<br>` : ""}
-            ${i.colO ? `<b>Description:</b> ${i.colO}<br>` : ""}
-            <b>${i.barcode}</b>
+            #${x+1}<br>
+            ${i.colJ?`J:${i.colJ}<br>`:""}
+            ${i.colM?`M:${i.colM}<br>`:""}
+            ${i.colO?`O:${i.colO}<br>`:""}
+            ${i.barcode}
         </div>
     `).join("");
 }
 
-/* CANCEL */
-function cancelNo() {
-    document.getElementById("result").innerHTML = "❌ CANCELLED";
-}
-
 /* REFRESH */
-function refreshPage() {
-    document.getElementById("siNo").value = "";
-    clearUI();
+function refreshPage(){
+    document.getElementById("siNo").value="";
+    document.getElementById("result").innerHTML="Ready";
+    document.getElementById("searchResult").innerHTML="";
 }
 
 </script>
