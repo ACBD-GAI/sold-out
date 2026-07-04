@@ -13,8 +13,6 @@ body {
     background: #f4f6f8;
 }
 
-h2 { font-size: 22px; }
-
 #reader {
     width: 100%;
     max-width: 350px;
@@ -23,20 +21,16 @@ h2 { font-size: 22px; }
 
 button {
     padding: 14px;
-    font-size: 16px;
-    margin-top: 10px;
     width: 90%;
+    margin-top: 10px;
     background: #1976d2;
     color: white;
     border: none;
     border-radius: 8px;
 }
 
-button:disabled { background: gray; }
-
 #result, #searchResult {
-    margin-top: 20px;
-    font-size: 18px;
+    margin-top: 15px;
     font-weight: bold;
 }
 </style>
@@ -49,10 +43,10 @@ button:disabled { background: gray; }
 <div id="reader"></div>
 
 <input id="siNo" placeholder="Enter SI No"
-style="padding:12px;width:85%;font-size:16px;margin-top:5px;">
+style="padding:12px;width:85%;">
 
 <button onclick="startScan()">START SCAN</button>
-<button onclick="searchSI()">SEARCH SI NO</button>
+<button onclick="searchSI()">SEARCH SI</button>
 <button onclick="refreshPage()" style="background:#ff9800;">REFRESH</button>
 
 <p id="result">Ready</p>
@@ -63,152 +57,101 @@ style="padding:12px;width:85%;font-size:16px;margin-top:5px;">
 let scanner = null;
 let isScanning = false;
 
-const API_URL = "https://script.google.com/macros/s/AKfycbyE6rAFE7Q1f3wkAEnNdiI17pW51CQLsM6TtHXzSU5Nk6t5QadWmA9ZXkUOPciXerG5/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbx5vV4L97w4ZRJs6IaSEpJgEVC_6gMcYm5ugneO8EN0pirDkzSKeY2O7RgXg__1UR702A/exec";
 
 
-// =========================
-// START SCAN (FIXED CAMERA)
-// =========================
+// ================= SCAN =================
 async function startScan() {
 
     const siNo = document.getElementById("siNo").value.trim();
     const result = document.getElementById("result");
 
-    if (!siNo) {
-        result.innerHTML = "⚠ Enter SI No";
-        return;
-    }
+    if (!siNo) return result.innerHTML = "⚠ Enter SI No";
 
     if (scanner) {
-        try {
-            await scanner.stop();
-            await scanner.clear();
-        } catch (e) {}
+        await scanner.stop();
+        scanner.clear();
         scanner = null;
     }
 
-    try {
+    const devices = await Html5Qrcode.getCameras();
 
-        const devices = await Html5Qrcode.getCameras();
+    let cameraId = devices[devices.length - 1].id;
 
-        if (!devices.length) {
-            result.innerHTML = "No camera found ❌";
-            return;
-        }
+    scanner = new Html5Qrcode("reader");
 
-        let cameraId = null;
+    scanner.start(cameraId, { fps: 10, qrbox: 250 }, async (code) => {
 
-        // ✅ FIND BACK CAMERA
-        for (let device of devices) {
-            const label = (device.label || "").toLowerCase();
+        if (isScanning) return;
+        isScanning = true;
 
-            if (
-                label.includes("back") ||
-                label.includes("rear") ||
-                label.includes("environment")
-            ) {
-                cameraId = device.id;
-                break;
-            }
-        }
+        // STOP SCANNER
+        await scanner.stop();
+        scanner.clear();
+        scanner = null;
 
-        // ✅ FALLBACK CAMERA
-        if (!cameraId) {
-            cameraId = devices[devices.length - 1].id;
-        }
+        result.innerHTML = `
+        <div>
+            ADD TO SOLD?<br><br>
+            <button onclick="confirmSave('${code}','${siNo}',true)">YES</button>
+            <button onclick="confirmSave('${code}','${siNo}',false)" style="background:red;">NO</button>
+        </div>`;
 
-        scanner = new Html5Qrcode("reader");
+        isScanning = false;
+    });
+}
 
-        await scanner.start(
-            cameraId,
-            { fps: 10, qrbox: 250 },
 
-            async (code) => {
+// ================= CONFIRM =================
+async function confirmSave(code, siNo, ok) {
 
-                if (isScanning) return;
-                isScanning = true;
+    if (!ok) {
+        result.innerHTML = "❌ CANCELLED";
+        return;
+    }
 
-                result.innerHTML = "Processing...";
+    const res = await fetch(API_URL + "?barcode=" + code + "&siNo=" + siNo);
+    const data = await res.json();
 
-                const res = await fetch(
-                    API_URL + "?barcode=" + code + "&siNo=" + siNo
-                );
+    let lens = data.colJ;
+    let desc = data.colO;
 
-                const data = await res.json();
+    let details = lens ? `Lens: ${lens}<br>${desc}` : `Description: ${desc}`;
 
-                let lens = data.colJ;
-                let desc = data.colO;
+    let time = data.timestamp ? new Date(data.timestamp).toLocaleString() : "";
 
-                let details = "";
-
-                if (lens && lens.trim() !== "") {
-                    details = `Lens: ${lens}<br>Description: ${desc}`;
-                } else {
-                    details = `Description: ${desc}`;
-                }
-
-                let time = data.timestamp
-                    ? new Date(data.timestamp).toLocaleString()
-                    : "";
-
-                if (data.status === "DUPLICATE") {
-                    result.innerHTML =
-                        `⚠ DUPLICATE<br>${details}<br>SI: ${data.siNo}<br>${time}`;
-                }
-                else if (data.status === "FOUND") {
-                    result.innerHTML =
-                        `✅ SCANNED<br>${details}<br>${time}`;
-                }
-                else {
-                    result.innerHTML = "❌ NOT FOUND";
-                }
-
-                isScanning = false;
-            }
-        );
-
-    } catch (err) {
-        result.innerHTML = "Camera error ❌";
+    if (data.status === "DUPLICATE") {
+        result.innerHTML = `⚠ DUPLICATE<br>${details}<br>${time}`;
+    }
+    else if (data.status === "FOUND") {
+        result.innerHTML = `✅ SAVED<br>${details}<br>${time}`;
+    }
+    else {
+        result.innerHTML = "❌ NOT FOUND";
     }
 }
 
 
-// =========================
-// SEARCH SI NO
-// =========================
+// ================= SEARCH =================
 async function searchSI() {
 
     const siNo = document.getElementById("siNo").value;
     const out = document.getElementById("searchResult");
 
-    if (!siNo) {
-        out.innerHTML = "⚠ Enter SI No";
-        return;
-    }
-
-    out.innerHTML = "Searching...";
-
     const res = await fetch(API_URL + "?action=searchSI&siNo=" + siNo);
     const data = await res.json();
 
-    if (!data.items.length) {
-        out.innerHTML = "No results found";
-        return;
-    }
+    if (!data.items.length) return out.innerHTML = "No results";
 
-    let html = `<b>SI:</b> ${siNo}<br><br>`;
+    let html = "";
 
     data.items.forEach((i, index) => {
 
-        let lens = i.lens;
-        let desc = i.grade;
-
-        html += `
-        <div style="border:1px solid #ccc;padding:10px;margin:5px;">
-            <b>#${index + 1}</b><br>
-            ${lens ? "Lens: " + lens + "<br>" : ""}
-            Description: ${desc}<br>
-            Barcode: ${i.barcode}
+        html += `<div style="border:1px solid #ccc;margin:5px;padding:8px;">
+        #${index+1}<br>
+        ${i.lens ? "Lens: " + i.lens + "<br>" : ""}
+        ${i.grade}<br>
+        ${i.barcode}
         </div>`;
     });
 
@@ -216,22 +159,15 @@ async function searchSI() {
 }
 
 
-// =========================
-// REFRESH
-// =========================
+// ================= REFRESH =================
 function refreshPage() {
-
     document.getElementById("siNo").value = "";
     document.getElementById("result").innerHTML = "Ready";
     document.getElementById("searchResult").innerHTML = "";
 
-    isScanning = false;
-
     if (scanner) {
-        try {
-            scanner.stop();
-            scanner.clear();
-        } catch (e) {}
+        scanner.stop();
+        scanner.clear();
         scanner = null;
     }
 }
