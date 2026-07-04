@@ -102,7 +102,7 @@ function getResult() {
     return document.getElementById("result");
 }
 
-const API_URL = "https://script.google.com/macros/s/AKfycby_HiUOSas5-BALU8PCyQDRbQ5rDVuJcmdwwL89DKE7JmFfPU7osmbRprG1jaor9_53dw/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbw0-t0VIotPgufkCF_MlsmwWqCPKCOqBALU63sRztCcKcvUv1zA6TzAaMTiW0ykjEhKEA/exec";
 
 
 // ================= START SCAN =================
@@ -153,7 +153,7 @@ async function startScan() {
             let desc = data.colO || "";
 
             let details =
-                `<b>Col M:</b> ${colM}<br>` +
+                `<b>Tag no:</b> ${colM}<br>` +
                 (lens ? `<b>Lens:</b> ${lens}<br>` : "") +
                 `<b>Description:</b> ${desc}`;
 
@@ -161,7 +161,7 @@ async function startScan() {
 
                 result.innerHTML = `
                     <div class="card green">
-                        ✅ FOUND<br><br>
+                        ✅ Available<br><br>
                         ${details}<br><br>
 
                         <button id="yesBtn"
@@ -224,7 +224,7 @@ async function confirmSave(code, siNo, ok) {
 
     result.innerHTML = `
         <div class="card green">
-            ✅ SAVED<br><br>
+            ✅ SOLD<br><br>
             <b>Col M:</b> ${colM}<br>
             ${lens ? `<b>Lens:</b> ${lens}<br>` : ""}
             <b>Description:</b> ${desc}
@@ -253,7 +253,7 @@ async function searchSI() {
 
         html += `<div style="border:1px solid #ccc;margin:5px;padding:8px;">
         #${index+1}<br>
-        Col M: ${i.colM}<br>
+        Tag no.: ${i.colM}<br>
         ${i.lens ? "Lens: " + i.lens + "<br>" : ""}
         ${i.grade}<br>
         ${i.barcode}
