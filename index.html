@@ -2,364 +2,362 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
 
 <style>
-
 body {
-    font-family: Arial;
-    margin: 0;
-    background: #eef2f7;
+  font-family: Arial;
+  margin: 0;
+  background: #eef2f7;
 }
 
 /* HEADER */
 .header {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    padding: 12px;
-    background: linear-gradient(135deg, #2196f3, #1976d2);
-    color: white;
-    position: sticky;
-    top: 0;
-    z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 12px;
+  background: linear-gradient(135deg, #2196f3, #1976d2);
+  color: white;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
 }
 
 .header img {
-    width: 40px;
-    height: 40px;
-    background: white;
-    border-radius: 8px;
-    padding: 3px;
+  width: 40px;
+  height: 40px;
+  background: white;
+  border-radius: 8px;
+  padding: 3px;
 }
 
 /* CONTAINER */
 .container {
-    padding: 15px;
+  padding: 15px;
 }
 
 /* SCANNER */
 #reader {
-    width: 100%;
-    max-width: 360px;
-    margin: auto;
-    border-radius: 15px;
-    overflow: hidden;
+  width: 100%;
+  max-width: 360px;
+  margin: auto;
+  border-radius: 15px;
+  overflow: hidden;
 }
 
 /* INPUT */
 input {
-    padding: 14px;
-    width: 100%;
-    font-size: 16px;
-    border-radius: 12px;
-    border: none;
-    margin-top: 12px;
+  padding: 14px;
+  width: 100%;
+  font-size: 16px;
+  border-radius: 12px;
+  border: none;
+  margin-top: 12px;
 }
 
 /* BUTTONS */
 button {
-    padding: 14px;
-    width: 100%;
-    margin-top: 10px;
-    border: none;
-    border-radius: 14px;
-    font-weight: bold;
-    cursor: pointer;
-    transition: all 0.25s ease;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.12);
+  padding: 14px;
+  width: 100%;
+  margin-top: 10px;
+  border: none;
+  border-radius: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.12);
 }
 
 button:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 10px 18px rgba(0,0,0,0.18);
+  transform: translateY(-3px);
+  box-shadow: 0 10px 18px rgba(0,0,0,0.18);
 }
 
 button:active {
-    transform: translateY(1px) scale(0.98);
+  transform: translateY(1px) scale(0.98);
 }
 
 .btn-blue {
-    background: linear-gradient(135deg, #2196f3, #1976d2);
-    color: white;
+  background: linear-gradient(135deg, #2196f3, #1976d2);
+  color: white;
 }
 
 .btn-orange {
-    background: linear-gradient(135deg, #ff7043, #ff5722);
-    color: white;
+  background: linear-gradient(135deg, #ff7043, #ff5722);
+  color: white;
 }
 
 /* CARD */
 .card {
-    padding: 15px;
-    border-radius: 15px;
-    margin-top: 12px;
-    background: white;
+  padding: 15px;
+  border-radius: 15px;
+  margin-top: 12px;
+  background: white;
 }
 
-.green { border-left: 6px solid #2ecc71; }
-.red { border-left: 6px solid #e74c3c; }
+.green {
+  border-left: 6px solid #2ecc71;
+}
 
+.red {
+  border-left: 6px solid #e74c3c;
+}
 </style>
 </head>
 
 <body>
 
-<!-- LOGIN SCREEN -->
-<div id="loginScreen">
-
-    <div class="header">
-        <img src="https://drive.google.com/thumbnail?id=1tOeVr8yecFf_REL9zHznEh9Qs2clqVrt&sz=w200">
-        <h3 style="margin:0;">SCAN ITEM SYSTEM</h3>
-    </div>
-
-    <div class="container">
-
-        <input id="password" type="password" placeholder="Enter Password">
-
-        <button class="btn-blue" onclick="login()">🔒 LOGIN</button>
-
-        <p id="loginMsg"></p>
-
-    </div>
-
-</div>
-
-<!-- APP -->
-<div id="app" style="display:none;">
-
 <div class="header">
-    <img src="https://drive.google.com/thumbnail?id=1tOeVr8yecFf_REL9zHznEh9Qs2clqVrt&sz=w200">
-    <h3 style="margin:0;">SCAN ITEM SYSTEM</h3>
+  <img src="https://drive.google.com/thumbnail?id=1tOeVr8yecFf_REL9zHznEh9Qs2clqVrt&sz=w200">
+  <h3 style="margin:0;">SCAN ITEM SYSTEM</h3>
 </div>
 
 <div class="container">
 
-    <div id="reader"></div>
+  <div id="reader" style="display:none;"></div>
 
-    <input id="siNo" placeholder="Enter SI No">
+  <input id="siNo" placeholder="Enter SI No">
 
-    <button id="scanBtn" class="btn-blue" onclick="toggleScan()">📷 START SCAN</button>
-    <button class="btn-blue" onclick="searchSI()">🔍 SEARCH SI</button>
-    <button class="btn-orange" onclick="refreshPage()">♻ REFRESH</button>
+  <button id="scanBtn" class="btn-blue" onclick="toggleScan()">📷 START SCAN</button>
+  <button class="btn-blue" onclick="searchSI()">🔍 SEARCH SI</button>
+  <button class="btn-orange" onclick="refreshPage()">♻ REFRESH</button>
 
-    <p id="result">Ready</p>
-    <div id="searchResult"></div>
-
-</div>
+  <p id="result">Ready</p>
+  <div id="searchResult"></div>
 
 </div>
 
 <script>
-
-const API_URL = "https://script.google.com/macros/s/AKfycbxe_g2u81yTaUeS462X2LulIEwpK8O7HQeou7RagvpmYTgv3_ocLLxaLgw68hyjTyhRWQ/exec";
-
-/* ================= LOGIN ================= */
-async function login() {
-
-    const pass = document.getElementById("password").value;
-
-    const res = await fetch(
-        API_URL + "?action=login&password=" + encodeURIComponent(pass)
-    );
-
-    const data = await res.json();
-
-    if (data.status === "SUCCESS") {
-        document.getElementById("loginScreen").style.display = "none";
-        document.getElementById("app").style.display = "block";
-    } else {
-        document.getElementById("loginMsg").innerHTML =
-            "<span style='color:red'>Wrong Password</span>";
-    }
-}
-
-/* ================= SOUND SYSTEM ================= */
-
-let audioCtx = null;
-
-function initAudio() {
-    if (!audioCtx) {
-        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    }
-}
-
-function beep() {
-    initAudio();
-
-    const osc = audioCtx.createOscillator();
-    const gain = audioCtx.createGain();
-
-    osc.type = "square";
-    osc.frequency.value = 900;
-    gain.gain.value = 0.15;
-
-    osc.connect(gain);
-    gain.connect(audioCtx.destination);
-
-    osc.start();
-    osc.stop(audioCtx.currentTime + 0.12);
-}
-
-function vibrate() {
-    if (navigator.vibrate) {
-        navigator.vibrate([150, 80, 150]);
-    }
-}
-
-document.addEventListener("click", initAudio, { once: true });
-
-/* ================= SCANNER ================= */
-
 let scanner = null;
 let isScanning = false;
+let isSaving = false;
 let tempCode = "";
 let tempSi = "";
 
+const API_URL = "https://script.google.com/macros/s/AKfycbwwAzkf77Ob3VFiz53cAs8ocKc32BDllNPTFw9ihOXxUbCarY4qUiO1rXTwuwbXqdxiQg/exec";
+
+/* UI TOGGLE */
 function setUIScanning(state) {
+  const btn = document.getElementById("scanBtn");
+  const siBox = document.getElementById("siNo");
+  const reader = document.getElementById("reader");
+  const refreshBtn = document.querySelector(".btn-orange");
 
-    const btn = document.getElementById("scanBtn");
-    const siBox = document.getElementById("siNo");
-    const reader = document.getElementById("reader");
-    const refreshBtn = document.querySelector(".btn-orange");
-
-    if (state) {
-        btn.innerHTML = "⛔ STOP SCANNING";
-        siBox.disabled = true;
-        reader.style.display = "block";
-        refreshBtn.disabled = true;
-    } else {
-        btn.innerHTML = "📷 START SCAN";
-        siBox.disabled = false;
-        reader.style.display = "none";
-        refreshBtn.disabled = false;
-    }
+  if (state) {
+    btn.innerHTML = "⛔ STOP SCANNING";
+    siBox.disabled = true;
+    reader.style.display = "block";
+    refreshBtn.disabled = true;
+    refreshBtn.style.opacity = "0.5";
+  } else {
+    btn.innerHTML = "📷 START SCAN";
+    siBox.disabled = false;
+    reader.style.display = "none";
+    refreshBtn.disabled = false;
+    refreshBtn.style.opacity = "1";
+  }
 }
 
+/* TOGGLE SCAN */
 async function toggleScan() {
+  const siNo = document.getElementById("siNo").value;
+  if (!siNo) return alert("Enter SI No");
 
-    const siNo = document.getElementById("siNo").value;
-    if (!siNo) return alert("Enter SI No");
-
-    if (isScanning) {
-        isScanning = false;
-        setUIScanning(false);
-
-        if (scanner) {
-            await scanner.stop();
-            await scanner.clear();
-            scanner = null;
-        }
-        return;
+  if (isScanning) {
+    isScanning = false;
+    setUIScanning(false);
+    if (scanner) {
+      await scanner.stop();
+      await scanner.clear();
+      scanner = null;
     }
+    return;
+  }
 
-    clearUI();
+  clearUI();
+  isScanning = true;
+  setUIScanning(true);
 
-    isScanning = true;
-    setUIScanning(true);
+  const devices = await Html5Qrcode.getCameras();
+  let cameraId = devices[0].id;
 
-    const devices = await Html5Qrcode.getCameras();
-
-    let cameraId = devices[0].id;
-    for (let d of devices) {
-        const label = (d.label || "").toLowerCase();
-        if (label.includes("back") || label.includes("rear")) {
-            cameraId = d.id;
-            break;
-        }
+  for (let d of devices) {
+    const label = (d.label || "").toLowerCase();
+    if (label.includes("back") || label.includes("rear")) {
+      cameraId = d.id;
+      break;
     }
+  }
 
-    scanner = new Html5Qrcode("reader");
+  scanner = new Html5Qrcode("reader");
 
-    await scanner.start(
-        cameraId,
-        { fps: 10, qrbox: 250 },
-        async (code) => {
+  await scanner.start(
+    cameraId,
+    { fps: 10, qrbox: 250 },
+    async (code) => {
 
-            if (!isScanning) return;
-            isScanning = false;
+      if (!isScanning) return;
 
-            await scanner.stop();
-            await scanner.clear();
-            scanner = null;
+      isScanning = false;
+      await scanner.stop();
+      await scanner.clear();
+      scanner = null;
+      setUIScanning(false);
 
-            setUIScanning(false);
+      beep();
+      vibrate();
 
-            /* 🔊 SOUND HERE */
-            beep();
-            vibrate();
+      tempCode = code;
+      tempSi = siNo;
 
-            tempCode = code;
-            tempSi = siNo;
+      const res = await fetch(API_URL + "?action=check&barcode=" + encodeURIComponent(code));
+      const data = await res.json();
 
-            const res = await fetch(API_URL +
-                "?action=check&barcode=" + encodeURIComponent(code));
+      let row = data.row || [];
+      let colJ = data.colJ || row?.[9] || "";
+      let colO = data.colO || row?.[14] || "";
 
-            const data = await res.json();
+      if (data.status === "FOUND") {
+        document.getElementById("result").innerHTML = `
+          <div class="card green">
+            ✅ AVAILABLE<br><br>
+            <b>${colO}</b><br>
+            <b>${code}</b><br>
+            ${colJ ? `<small>${colJ}</small><br>` : ""}
+            <br>
+            <button id="saveBtn" class="btn-blue" onclick="saveYes()">ADD TO SOLD</button>
+            <button class="btn-orange" onclick="cancelNo()">CANCEL</button>
+          </div>
+        `;
+      }
 
-            let row = data.row || [];
-            let colJ = data.colJ || row?.[9] || "";
-            let colO = data.colO || row?.[14] || "";
+      else if (data.status === "DUPLICATE") {
+        document.getElementById("result").innerHTML = `
+          <div class="card red">
+            ⚠ ALREADY SOLD<br><br>
+            <b>${colO}</b><br>
+            <b>${code}</b><br>
+            ${colJ ? `<small>${colJ}</small>` : ""}
+          </div>
+        `;
+      }
 
-            if (data.status === "FOUND") {
-
-                document.getElementById("result").innerHTML = `
-                    <div class="card green">
-                        ✅ AVAILABLE<br><br>
-                        <b>${colO}</b><br>
-                        <b>${code}</b><br>
-
-                        <button class="btn-blue" onclick="saveYes()">
-                            ADD TO SOLD
-                        </button>
-
-                        <button class="btn-orange" onclick="cancelNo()">
-                            CANCEL
-                        </button>
-                    </div>
-                `;
-            }
-
-            else if (data.status === "DUPLICATE") {
-
-                document.getElementById("result").innerHTML = `
-                    <div class="card red">
-                        ⚠ ALREADY SOLD<br><br>
-                        <b>${colO}</b><br>
-                        <b>${code}</b><br>
-                    </div>
-                `;
-            }
-
-            else {
-
-                document.getElementById("result").innerHTML = `
-                    <div class="card red">
-                        ❌ NOT FOUND<br><br>
-                        <b>${colO}</b><br>
-                    </div>
-                `;
-            }
-        }
-    );
+      else {
+        document.getElementById("result").innerHTML = `
+          <div class="card red">
+            ❌ NOT FOUND<br><br>
+            <b>${colO}</b><br>
+            ${colJ ? `<small>${colJ}</small>` : ""}
+          </div>
+        `;
+      }
+    }
+  );
 }
 
+/* SAVE */
+async function saveYes() {
+  if (isSaving) return;
+  isSaving = true;
+
+  document.getElementById("saveBtn").disabled = true;
+  document.getElementById("result").innerHTML = "⏳ Saving...";
+
+  const res = await fetch(API_URL +
+    "?action=save&barcode=" + encodeURIComponent(tempCode) +
+    "&siNo=" + encodeURIComponent(tempSi));
+
+  const data = await res.json();
+
+  let row = data.row || [];
+  let colJ = data.colJ || row?.[9] || "";
+  let colO = data.colO || row?.[14] || "";
+
+  document.getElementById("result").innerHTML = `
+    <div class="card green">
+      ✅ ${data.status}<br><br>
+      <b>${colO}</b><br>
+      <b>${tempCode}</b><br>
+      ${colJ ? `<small>${colJ}</small>` : ""}
+    </div>
+  `;
+
+  isSaving = false;
+}
+
+/* SEARCH */
+async function searchSI() {
+  clearUI();
+
+  const siNo = document.getElementById("siNo").value;
+
+  const res = await fetch(API_URL + "?action=searchSI&siNo=" + encodeURIComponent(siNo));
+  const data = await res.json();
+
+  const out = document.getElementById("searchResult");
+
+  if (!data.items?.length) {
+    out.innerHTML = "No results";
+    return;
+  }
+
+  out.innerHTML = data.items.map((item, idx) => `
+    <div class="card">
+      #${idx + 1}<br>
+      <b>${item.colO}</b><br>
+      ${item.colJ ? `<small>${item.colJ}</small><br>` : ""}
+      ${item.barcode}
+    </div>
+  `).join("");
+}
+
+/* UTIL */
 function clearUI() {
-    document.getElementById("result").innerHTML = "Ready";
-    document.getElementById("searchResult").innerHTML = "";
+  document.getElementById("result").innerHTML = "Ready";
+  document.getElementById("searchResult").innerHTML = "";
 }
 
 function cancelNo() {
-    document.getElementById("result").innerHTML = "❌ CANCELLED";
+  document.getElementById("result").innerHTML = "❌ CANCELLED";
 }
 
 function refreshPage() {
-    document.getElementById("siNo").value = "";
-    clearUI();
+  document.getElementById("siNo").value = "";
+  clearUI();
 }
 
+/* AUDIO */
+let audioCtx = null;
+
+function initAudio() {
+  if (!audioCtx) {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  }
+}
+
+function beep() {
+  initAudio();
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+
+  osc.type = "square";
+  osc.frequency.value = 900;
+  gain.gain.value = 0.15;
+
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
+
+  osc.start();
+  osc.stop(audioCtx.currentTime + 0.12);
+}
+
+function vibrate() {
+  if (navigator.vibrate) navigator.vibrate([150, 80, 150]);
+}
+
+document.addEventListener("click", initAudio, { once: true });
 </script>
 
 </body>
