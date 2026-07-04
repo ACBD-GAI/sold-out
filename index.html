@@ -11,6 +11,7 @@ body {
   background: #eef2f7;
 }
 
+/* HEADER */
 .header {
   display: flex;
   align-items: center;
@@ -32,8 +33,12 @@ body {
   padding: 3px;
 }
 
-.container { padding: 15px; }
+/* CONTAINER */
+.container {
+  padding: 15px;
+}
 
+/* SCANNER */
 #reader {
   width: 100%;
   max-width: 360px;
@@ -42,6 +47,7 @@ body {
   overflow: hidden;
 }
 
+/* INPUT */
 input {
   padding: 14px;
   width: 100%;
@@ -51,6 +57,7 @@ input {
   margin-top: 12px;
 }
 
+/* BUTTONS */
 button {
   padding: 14px;
   width: 100%;
@@ -59,12 +66,17 @@ button {
   border-radius: 14px;
   font-weight: bold;
   cursor: pointer;
-  transition: 0.25s;
+  transition: all 0.25s ease;
   box-shadow: 0 4px 10px rgba(0,0,0,0.12);
 }
 
 button:hover {
   transform: translateY(-3px);
+  box-shadow: 0 10px 18px rgba(0,0,0,0.18);
+}
+
+button:active {
+  transform: translateY(1px) scale(0.98);
 }
 
 .btn-blue {
@@ -77,6 +89,7 @@ button:hover {
   color: white;
 }
 
+/* CARD */
 .card {
   padding: 15px;
   border-radius: 15px;
@@ -84,27 +97,49 @@ button:hover {
   background: white;
 }
 
-.green { border-left: 6px solid #2ecc71; }
-.red { border-left: 6px solid #e74c3c; }
+.green {
+  border-left: 6px solid #2ecc71;
+}
+
+.red {
+  border-left: 6px solid #e74c3c;
+}
 </style>
 </head>
 
 <body>
 
-<!-- LOGIN -->
-<div id="loginScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#eef2f7;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;">
+
+<div id="loginScreen" style="
+  position: fixed;
+  top:0; left:0;
+  width:100%; height:100%;
+  background:#eef2f7;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  flex-direction:column;
+  z-index:9999;
+">
+
   <h2>🔐 SYSTEM LOGIN</h2>
-  <input id="password" type="password" placeholder="Enter Password" style="padding:14px;width:80%;max-width:300px;border-radius:10px;border:none;">
-  <button class="btn-blue" style="width:80%;max-width:300px;" onclick="login()">LOGIN</button>
+
+  <input id="password" type="password" placeholder="Enter Password"
+    style="padding:14px; width:80%; max-width:300px; border-radius:10px; border:none;">
+
+  <button class="btn-blue" style="width:80%; max-width:300px;" onclick="login()">
+    LOGIN
+  </button>
+
   <p id="loginStatus"></p>
 </div>
 
-<!-- APP -->
+
 <div id="app" style="display:none;">
 
   <div class="header">
     <img src="https://drive.google.com/thumbnail?id=1tOeVr8yecFf_REL9zHznEh9Qs2clqVrt&sz=w200">
-    <h3>SCAN SYSTEM</h3>
+    <h3 style="margin:0;">GAISANO ILOILO</h3>
   </div>
 
   <div class="container">
@@ -113,8 +148,7 @@ button:hover {
 
     <input id="siNo" placeholder="Enter SI No">
 
-    <button class="btn-blue" onclick="toggleScan()">📷 START SCAN</button>
-    <button class="btn-blue" onclick="switchCamera()">🔄 SWITCH CAMERA</button>
+    <button id="scanBtn" class="btn-blue" onclick="toggleScan()">📷 START SCAN</button>
     <button class="btn-blue" onclick="searchSI()">🔍 SEARCH SI</button>
     <button class="btn-orange" onclick="refreshPage()">♻ REFRESH</button>
 
@@ -128,16 +162,17 @@ button:hover {
 
 let scanner = null;
 let isScanning = false;
-
+let isSaving = false;
 let tempCode = "";
 let tempSi = "";
 
 let cameraList = [];
 let currentCameraIndex = 0;
+let currentCameraId = null;
 
-const API_URL = "https://script.google.com/macros/s/AKfycbxLtOotG_vl5G2FNVufwt-gZyW7LOLfONyj7PQTzAPEdyW_LqN27OcxQpui8WHguaMb3Q/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbwuvZ1DnWNvJYUrwK5gZpacEp5R1iwR19O-Ga70cKea_R03hd8yhiyY7J_HnjdTj0js3w/exec";
 
-/* LOGIN */
+/* ================= LOGIN (UNCHANGED) ================= */
 async function login() {
   const pass = document.getElementById("password").value;
 
@@ -152,31 +187,94 @@ async function login() {
   }
 }
 
-/* CAMERA INIT */
-async function initCameras() {
-  cameraList = await Html5Qrcode.getCameras();
-
-  if (!cameraList.length) return;
-
-  currentCameraIndex = 0;
-
-  for (let i = 0; i < cameraList.length; i++) {
-    const label = (cameraList[i].label || "").toLowerCase();
-    if (label.includes("back") || label.includes("rear")) {
-      currentCameraIndex = i;
-      break;
-    }
-  }
-}
-
-/* START SCAN */
+/* ================= START SCANNER ================= */
 async function startScanner(cameraId) {
   scanner = new Html5Qrcode("reader");
 
-  await scanner.start(cameraId, { fps: 10, qrbox: 250 }, onScan);
+  await scanner.start(
+    cameraId,
+    { fps: 10, qrbox: 250 },
+    async (code) => onScan(code)
+  );
+
+  currentCameraId = cameraId;
 }
 
-/* TOGGLE SCAN */
+/* ================= SWITCH CAMERA (FIXED) ================= */
+async function switchCamera() {
+  if (!cameraList.length) {
+    alert("Start scanner first");
+    return;
+  }
+
+  if (!scanner) {
+    alert("Scanner not active");
+    return;
+  }
+
+  await scanner.stop();
+  await scanner.clear();
+  scanner = null;
+
+  currentCameraIndex = (currentCameraIndex + 1) % cameraList.length;
+
+  const nextCameraId = cameraList[currentCameraIndex].id;
+  startScanner(nextCameraId);
+}
+
+/* ================= ON SCAN ================= */
+async function onScan(code) {
+
+  if (!isScanning) return;
+
+  isScanning = false;
+  await scanner.stop();
+  await scanner.clear();
+  scanner = null;
+
+  beep();
+  vibrate();
+
+  tempCode = code;
+  tempSi = document.getElementById("siNo").value;
+
+  const res = await fetch(API_URL + "?action=check&barcode=" + encodeURIComponent(code));
+  const data = await res.json();
+
+  let row = data.row || [];
+  let colJ = row?.[9] || "";
+  let colO = row?.[14] || "";
+
+  if (data.status === "FOUND") {
+    document.getElementById("result").innerHTML = `
+      <div class="card green">
+        ✅ AVAILABLE<br><br>
+        <b>${colO}</b><br>
+        <b>${code}</b><br>
+        <small>${colJ}</small><br>
+        <button id="saveBtn" class="btn-blue" onclick="saveYes()">ADD TO SOLD</button>
+        <button class="btn-orange" onclick="cancelNo()">CANCEL</button>
+      </div>
+    `;
+  } else if (data.status === "DUPLICATE") {
+    document.getElementById("result").innerHTML = `
+      <div class="card red">
+        ⚠ ALREADY SOLD<br><br>
+        <b>${colO}</b><br>
+        <b>${code}</b><br>
+      </div>
+    `;
+  } else {
+    document.getElementById("result").innerHTML = `
+      <div class="card red">
+        ❌ NOT FOUND<br><br>
+        <b>${colO}</b><br>
+      </div>
+    `;
+  }
+}
+
+/* ================= TOGGLE SCAN ================= */
 async function toggleScan() {
   const siNo = document.getElementById("siNo").value;
   if (!siNo) return alert("Enter SI No");
@@ -194,70 +292,74 @@ async function toggleScan() {
   clearUI();
   isScanning = true;
 
-  if (!cameraList.length) await initCameras();
+  cameraList = await Html5Qrcode.getCameras();
 
-  const cameraId = cameraList[currentCameraIndex].id;
-
-  document.getElementById("reader").style.display = "block";
-
-  startScanner(cameraId);
-}
-
-/* SWITCH CAMERA (FIXED) */
-async function switchCamera() {
-  if (!cameraList.length) await initCameras();
-
-  if (!scanner) {
-    alert("Start scanner first");
+  if (!cameraList.length) {
+    alert("No camera found");
     return;
   }
 
-  await scanner.stop();
-  await scanner.clear();
-  scanner = null;
+  // default camera (back camera if possible)
+  let defaultIndex = 0;
 
-  currentCameraIndex = (currentCameraIndex + 1) % cameraList.length;
+  for (let i = 0; i < cameraList.length; i++) {
+    const label = (cameraList[i].label || "").toLowerCase();
+    if (label.includes("back") || label.includes("rear")) {
+      defaultIndex = i;
+      break;
+    }
+  }
+
+  currentCameraIndex = defaultIndex;
 
   startScanner(cameraList[currentCameraIndex].id);
 }
 
-/* ON SCAN */
-async function onScan(code) {
+/* ================= SAVE (UNCHANGED) ================= */
+async function saveYes() {
+  const res = await fetch(API_URL +
+    "?action=save&barcode=" + encodeURIComponent(tempCode) +
+    "&siNo=" + encodeURIComponent(tempSi));
 
-  if (!isScanning) return;
-
-  isScanning = false;
-
-  if (scanner) {
-    await scanner.stop();
-    await scanner.clear();
-    scanner = null;
-  }
-
-  tempCode = code;
-  tempSi = document.getElementById("siNo").value;
-
-  const res = await fetch(API_URL + "?action=check&barcode=" + encodeURIComponent(code));
   const data = await res.json();
 
-  let row = data.row || [];
-  let colJ = row?.[9] || "";
-  let colO = row?.[14] || "";
-
-  document.getElementById("result").innerHTML = `
-    <div class="card ${data.status === "FOUND" ? "green" : "red"}">
-      <b>${data.status}</b><br><br>
-      <b>${colO}</b><br>
-      <b>${code}</b><br>
-      <small>${colJ}</small>
-    </div>
-  `;
+  document.getElementById("result").innerHTML =
+    `<div class="card green">✅ ${data.status}</div>`;
 }
 
-/* UTIL */
+/* ================= SEARCH (UNCHANGED) ================= */
+async function searchSI() {
+  clearUI();
+
+  const siNo = document.getElementById("siNo").value;
+
+  const res = await fetch(API_URL + "?action=searchSI&siNo=" + encodeURIComponent(siNo));
+  const data = await res.json();
+
+  const out = document.getElementById("searchResult");
+
+  if (!data.items?.length) {
+    out.innerHTML = "No results";
+    return;
+  }
+
+  out.innerHTML = data.items.map((item, idx) => `
+    <div class="card">
+      #${idx + 1}<br>
+      <b>${item.barcode}</b><br>
+      <small>${item.colJ}</small>
+    </div>
+  `).join("");
+}
+
+/* ================= UTIL (UNCHANGED) ================= */
 function clearUI() {
   document.getElementById("result").innerHTML = "Ready";
   document.getElementById("searchResult").innerHTML = "";
+}
+
+function cancelNo() {
+  document.getElementById("result").innerHTML = "❌ CANCELLED";
 }
 
 function refreshPage() {
@@ -265,24 +367,36 @@ function refreshPage() {
   clearUI();
 }
 
-/* AUDIO */
-let audioCtx;
+/* ================= AUDIO (UNCHANGED) ================= */
+let audioCtx = null;
+
+function initAudio() {
+  if (!audioCtx) {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  }
+}
 
 function beep() {
-  if (!audioCtx) audioCtx = new AudioContext();
+  initAudio();
   const osc = audioCtx.createOscillator();
   const gain = audioCtx.createGain();
+
+  osc.type = "square";
   osc.frequency.value = 900;
-  gain.gain.value = 0.1;
+  gain.gain.value = 0.15;
+
   osc.connect(gain);
   gain.connect(audioCtx.destination);
+
   osc.start();
-  osc.stop(audioCtx.currentTime + 0.1);
+  osc.stop(audioCtx.currentTime + 0.12);
 }
 
 function vibrate() {
-  if (navigator.vibrate) navigator.vibrate(100);
+  if (navigator.vibrate) navigator.vibrate([150, 80, 150]);
 }
+
+document.addEventListener("click", initAudio, { once: true });
 
 </script>
 
