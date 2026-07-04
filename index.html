@@ -123,13 +123,13 @@ function vibrate() {
     if (navigator.vibrate) navigator.vibrate([200,100,200]);
 }
 
-const API_URL = "https://script.google.com/macros/s/AKfycbzrcvwvJaqlK4Gp9OKAm2HQWM5mR1zhRNsrUd5PtCvLuHZ6wJIRUIwQzUSY3bSiEc3hLQ/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbzkc19KJCqGXgd6OBlXoLUQd39s9w9BRJLWgG16SK5HpPCzdH1x7pEgbxilDdW4qBID4Q/exec";
 
 
 // ================= SCAN =================
 async function startScan() {
 
-    const siNo = document.getElementById("siNo").value.trim();
+    const siNo = document.getElementById("siNo").value; // KEEP STRING (IMPORTANT)
 
     if (!siNo) {
         document.getElementById("result").innerHTML = "⚠ Enter SI No";
@@ -155,15 +155,18 @@ async function startScan() {
         if (isScanning) return;
         isScanning = true;
 
-        await scanner.stop();
-        await scanner.clear();
+        try {
+            await scanner.stop();
+            await scanner.clear();
+        } catch(e){}
+
         scanner = null;
 
         beep();
         vibrate();
 
         tempCode = code;
-        tempSi = siNo;
+        tempSi = siNo; // KEEP ORIGINAL STRING (002 safe)
 
         const res = await fetch(API_URL +
             "?barcode=" + encodeURIComponent(code) +
@@ -182,7 +185,7 @@ async function startScan() {
 
             document.getElementById("result").innerHTML = `
                 <div class="card green">
-                    ✅ Available<br><br>
+                    ✅ AVAILABLE<br><br>
                     ${details}<br><br>
 
                     <button onclick="saveYes()" style="background:green;color:white;">
@@ -200,7 +203,7 @@ async function startScan() {
 
             document.getElementById("result").innerHTML = `
                 <div class="card red">
-                    ⚠ Already sold or Scanned<br><br>
+                    ⚠ ALREADY SOLD<br><br>
                     ${details}<br><br>
 
                     <button onclick="cancelNo()" style="background:red;color:white;">
@@ -219,7 +222,7 @@ async function startScan() {
 }
 
 
-// ================= SAVE YES =================
+// ================= SAVE =================
 async function saveYes() {
 
     const res = await fetch(API_URL +
@@ -230,7 +233,7 @@ async function saveYes() {
 
     document.getElementById("result").innerHTML = `
         <div class="card green">
-            ✅ Sold<br><br>
+            ✅ SOLD<br><br>
             ${data.colJ ? "Lens: " + data.colJ + "<br>" : ""}
             Description: ${data.colO || ""}
         </div>
@@ -247,7 +250,8 @@ function cancelNo() {
 // ================= SEARCH =================
 async function searchSI() {
 
-    const siNo = document.getElementById("siNo").value.trim();
+    const siNo = document.getElementById("siNo").value; // KEEP STRING
+
     const out = document.getElementById("searchResult");
 
     document.getElementById("result").innerHTML = "Ready";
