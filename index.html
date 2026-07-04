@@ -38,7 +38,6 @@ button {
     font-size: 15px;
     font-weight: bold;
     cursor: pointer;
-    transition: 0.2s;
 }
 
 .btn-blue {
@@ -49,10 +48,6 @@ button {
 .btn-orange {
     background: linear-gradient(135deg, #ff9800, #ff5722);
     color: white;
-}
-
-button:hover {
-    transform: scale(1.02);
 }
 
 .card {
@@ -95,48 +90,17 @@ let isScanning = false;
 let tempCode = "";
 let tempSi = "";
 
-// ================= AUDIO =================
-let audioCtx = null;
-document.addEventListener("click", () => {
-    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    audioCtx.resume();
-}, { once: true });
-
-function beep() {
-    if (!audioCtx) return;
-
-    const osc = audioCtx.createOscillator();
-    const gain = audioCtx.createGain();
-
-    osc.type = "square";
-    osc.frequency.value = 800;
-    gain.gain.value = 0.2;
-
-    osc.connect(gain);
-    gain.connect(audioCtx.destination);
-
-    osc.start();
-    osc.stop(audioCtx.currentTime + 0.12);
-}
-
-function vibrate() {
-    if (navigator.vibrate) navigator.vibrate([200,100,200]);
-}
-
-const API_URL = "https://script.google.com/macros/s/AKfycbwyJtuZEcHN1i5cBQe19tUvVJb4hk5Z4ej0lKIUDzlRWni8fnnmDh4AYHJz2hPeRyhF7Q/exec";
-
+const API_URL = "https://script.google.com/macros/s/AKfycbzPSX0ABAKSjCtU7XLv6y9d0h46unXqCtyL-JiC9r-wj6h32CeOMHhaNiiF8QKrOkdqVw/exec";
 
 // ================= SCAN =================
 async function startScan() {
 
-    const siNo = document.getElementById("siNo").value; // KEEP STRING (IMPORTANT)
+    const siNo = document.getElementById("siNo").value;
 
     if (!siNo) {
         document.getElementById("result").innerHTML = "⚠ Enter SI No";
         return;
     }
-
-    document.getElementById("searchResult").innerHTML = "";
 
     if (scanner) {
         try { await scanner.stop(); await scanner.clear(); } catch(e){}
@@ -144,119 +108,109 @@ async function startScan() {
     }
 
     const devices = await Html5Qrcode.getCameras();
-    const cameraId = devices[devices.length - 1].id;
+    const cameraId = devices[0].id;
 
     scanner = new Html5Qrcode("reader");
 
-    await scanner.start(cameraId, { fps: 10, qrbox: 250 },
+    await scanner.start(
+        cameraId,
+        { fps: 10, qrbox: 250 },
+        async (code) => {
 
-    async (code) => {
+            if (isScanning) return;
+            isScanning = true;
 
-        if (isScanning) return;
-        isScanning = true;
+            try {
+                await scanner.stop();
+                await scanner.clear();
+            } catch(e){}
 
-        try {
-            await scanner.stop();
-            await scanner.clear();
-        } catch(e){}
+            scanner = null;
 
-        scanner = null;
+            tempCode = code;
+            tempSi = siNo;
 
-        beep();
-        vibrate();
+            const res = await fetch(API_URL +
+                "?action=check&barcode=" + encodeURIComponent(code) +
+                "&siNo=" + encodeURIComponent(siNo));
 
-        tempCode = code;
-        tempSi = siNo; // KEEP ORIGINAL STRING (002 safe)
+            const data = await res.json();
 
-        const res = await fetch(API_URL +
-            "?barcode=" + encodeURIComponent(code) +
-            "&siNo=" + encodeURIComponent(siNo));
+            let row = data.row || [];
 
-        const data = await res.json();
+            let colJ = row[9] || "";
+            let colO = row[14] || "";
 
-        let colJ = data.colJ || "";
-        let colO = data.colO || "";
+            let details =
+                (colJ ? `<b>Lens:</b> ${colJ}<br>` : "") +
+                `<b>Description:</b> ${colO}`;
 
-        let details =
-            (colJ ? `<b>Lens:</b> ${colJ}<br>` : "") +
-            `<b>Description:</b> ${colO}`;
+            if (data.status === "FOUND") {
 
-        if (data.status === "FOUND") {
+                document.getElementById("result").innerHTML = `
+                    <div class="card green">
+                        ✅ AVAILABLE<br><br>
+                        ${details}<br><br>
 
-            document.getElementById("result").innerHTML = `
-                <div class="card green">
-                    ✅ AVAILABLE<br><br>
-                    ${details}<br><br>
+                        <button onclick="saveYes()" style="background:green;color:white;">
+                            ADD TO SOLD?
+                        </button>
 
-                    <button onclick="saveYes()" style="background:green;color:white;">
-                        ADD TO SOLD?
-                    </button>
+                        <button onclick="cancelNo()" style="background:red;color:white;">
+                            NO
+                        </button>
+                    </div>
+                `;
+            }
 
-                    <button onclick="cancelNo()" style="background:red;color:white;">
-                        NO
-                    </button>
-                </div>
-            `;
+            else if (data.status === "DUPLICATE") {
+
+                document.getElementById("result").innerHTML = `
+                    <div class="card red">
+                        ⚠ ALREADY SOLD<br><br>
+                        ${details}<br>
+                        <button onclick="cancelNo()">OK</button>
+                    </div>
+                `;
+            }
+
+            else {
+                document.getElementById("result").innerHTML = "❌ NOT FOUND";
+            }
+
+            isScanning = false;
         }
-
-        else if (data.status === "DUPLICATE") {
-
-            document.getElementById("result").innerHTML = `
-                <div class="card red">
-                    ⚠ ALREADY SOLD<br><br>
-                    ${details}<br><br>
-
-                    <button onclick="cancelNo()" style="background:red;color:white;">
-                        OK
-                    </button>
-                </div>
-            `;
-        }
-
-        else {
-            document.getElementById("result").innerHTML = "❌ NOT FOUND";
-        }
-
-        isScanning = false;
-    });
+    );
 }
-
 
 // ================= SAVE =================
 async function saveYes() {
 
     const res = await fetch(API_URL +
-        "?barcode=" + encodeURIComponent(tempCode) +
+        "?action=save" +
+        "&barcode=" + encodeURIComponent(tempCode) +
         "&siNo=" + encodeURIComponent(tempSi));
 
     const data = await res.json();
 
     document.getElementById("result").innerHTML = `
         <div class="card green">
-            ✅ SOLD<br><br>
-            ${data.colJ ? "Lens: " + data.colJ + "<br>" : ""}
-            Description: ${data.colO || ""}
+            ✅ SOLD SAVED<br>
+            Status: ${data.status}
         </div>
     `;
 }
 
-
-// ================= CANCEL =================
-function cancelNo() {
-    document.getElementById("result").innerHTML = "❌ CANCELLED";
-}
-
-
-// ================= SEARCH =================
+// ================= SEARCH SI =================
 async function searchSI() {
 
-    const siNo = document.getElementById("siNo").value; // KEEP STRING
+    const siNo = document.getElementById("siNo").value;
 
     const out = document.getElementById("searchResult");
 
-    document.getElementById("result").innerHTML = "Ready";
+    const res = await fetch(API_URL +
+        "?action=searchSI&siNo=" + encodeURIComponent(siNo));
 
-    const res = await fetch(API_URL + "?action=searchSI&siNo=" + encodeURIComponent(siNo));
     const data = await res.json();
 
     if (!data.items || data.items.length === 0) {
@@ -264,22 +218,20 @@ async function searchSI() {
         return;
     }
 
-    let html = "";
-
-    data.items.forEach((i, index) => {
-
-        html += `
+    out.innerHTML = data.items.map((i, index) => `
         <div class="card">
-            #${index+1}<br>
-            ${i.colJ ? `<b>Lens:</b> ${i.colJ}<br>` : ""}
+            #${index + 1}<br>
+            <b>Lens:</b> ${i.colJ}<br>
             <b>Description:</b> ${i.colO}<br>
             ${i.barcode}
-        </div>`;
-    });
-
-    out.innerHTML = html;
+        </div>
+    `).join("");
 }
 
+// ================= CANCEL =================
+function cancelNo() {
+    document.getElementById("result").innerHTML = "❌ CANCELLED";
+}
 
 // ================= REFRESH =================
 function refreshPage() {
