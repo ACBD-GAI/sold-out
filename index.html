@@ -13,26 +13,60 @@ body {
     background: #f4f6f8;
 }
 
+/* ===== CAMERA BOX ===== */
 #reader {
     width: 100%;
     max-width: 350px;
     margin: auto;
+    border-radius: 12px;
+    overflow: hidden;
 }
 
+/* ===== INPUT ===== */
+input {
+    padding: 12px;
+    width: 85%;
+    font-size: 16px;
+    border-radius: 10px;
+    border: 1px solid #ccc;
+}
+
+/* ===== COOL BUTTONS ===== */
 button {
     padding: 14px;
     width: 90%;
     margin-top: 10px;
-    background: #1976d2;
-    color: white;
     border: none;
-    border-radius: 8px;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.2s;
 }
 
+/* primary */
+.btn-blue {
+    background: linear-gradient(135deg, #2196f3, #1976d2);
+    color: white;
+}
+
+/* orange */
+.btn-orange {
+    background: linear-gradient(135deg, #ff9800, #ff5722);
+    color: white;
+}
+
+/* hover effect */
+button:hover {
+    transform: scale(1.02);
+}
+
+/* ===== RESULT CARD ===== */
 .card {
-    padding: 12px;
-    border-radius: 10px;
-    margin-top: 10px;
+    padding: 14px;
+    border-radius: 12px;
+    margin-top: 12px;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.1);
 }
 
 .green { background: #d4f8d4; border: 2px solid green; }
@@ -47,16 +81,15 @@ button {
 
 <body>
 
-<h2>SCAN ITEM QR</h2>
+<h2>📦 SCAN ITEM SYSTEM</h2>
 
 <div id="reader"></div>
 
-<input id="siNo" placeholder="Enter SI No"
-style="padding:12px;width:85%;">
+<input id="siNo" placeholder="Enter SI No">
 
-<button onclick="startScan()">START SCAN</button>
-<button onclick="searchSI()">SEARCH SI</button>
-<button onclick="refreshPage()" style="background:#ff9800;">REFRESH</button>
+<button class="btn-blue" onclick="startScan()">📷 START SCAN</button>
+<button class="btn-blue" onclick="searchSI()">🔍 SEARCH SI</button>
+<button class="btn-orange" onclick="refreshPage()">♻ REFRESH</button>
 
 <p id="result">Ready</p>
 <div id="searchResult"></div>
@@ -66,6 +99,13 @@ style="padding:12px;width:85%;">
 let scanner = null;
 let isScanning = false;
 
+// ================= CLEAN RESULT CONTROL =================
+function clearAllResults() {
+    document.getElementById("result").innerHTML = "Ready";
+    document.getElementById("searchResult").innerHTML = "";
+}
+
+// ================= AUDIO =================
 let audioCtx = null;
 let audioUnlocked = false;
 
@@ -93,28 +133,24 @@ function playBeep() {
 }
 
 function vibrateDevice() {
-    if (navigator.vibrate) {
-        navigator.vibrate([200, 100, 200]);
-    }
-}
-
-function getResult() {
-    return document.getElementById("result");
+    if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
 }
 
 const API_URL = "https://script.google.com/macros/s/AKfycbw0-t0VIotPgufkCF_MlsmwWqCPKCOqBALU63sRztCcKcvUv1zA6TzAaMTiW0ykjEhKEA/exec";
 
 
-// ================= START SCAN =================
+// ================= SCAN =================
 async function startScan() {
 
     const siNo = document.getElementById("siNo").value.trim();
-    const result = getResult();
 
     if (!siNo) {
-        result.innerHTML = "⚠ Enter SI No";
+        document.getElementById("result").innerHTML = "⚠ Enter SI No";
         return;
     }
+
+    // 🔥 CLEAN OLD SEARCH BEFORE SCAN
+    document.getElementById("searchResult").innerHTML = "";
 
     if (scanner) {
         try { await scanner.stop(); await scanner.clear(); } catch(e){}
@@ -135,6 +171,9 @@ async function startScan() {
             if (isScanning) return;
             isScanning = true;
 
+            // 🔥 CLEAR SEARCH WHEN SCANNING
+            document.getElementById("searchResult").innerHTML = "";
+
             await scanner.stop();
             await scanner.clear();
             scanner = null;
@@ -142,61 +181,38 @@ async function startScan() {
             playBeep();
             vibrateDevice();
 
-            const safeCode = encodeURIComponent(code);
-            const safeSi = encodeURIComponent(siNo);
-
-            const res = await fetch(API_URL + "?barcode=" + safeCode + "&siNo=" + safeSi);
+            const res = await fetch(API_URL + "?barcode=" + encodeURIComponent(code) + "&siNo=" + encodeURIComponent(siNo));
             const data = await res.json();
 
-            let colM = data.colM || "";   // ✅ NEW
-            let lens = data.colJ || "";
-            let desc = data.colO || "";
+            let colM = data.colM || "";
+            let colJ = data.colJ || "";
+            let colO = data.colO || "";
 
             let details =
-                `<b>Tag no:</b> ${colM}<br>` +
-                (lens ? `<b>Lens:</b> ${lens}<br>` : "") +
-                `<b>Description:</b> ${desc}`;
+                `<b>Col M:</b> ${colM}<br>` +
+                (colJ ? `<b>Lens:</b> ${colJ}<br>` : "") +
+                `<b>Description:</b> ${colO}`;
 
             if (data.status === "FOUND") {
 
-                result.innerHTML = `
+                document.getElementById("result").innerHTML = `
                     <div class="card green">
-                        ✅ Available<br><br>
-                        ${details}<br><br>
-
-                        <button id="yesBtn"
-                            onclick="confirmSave('${safeCode}','${safeSi}',true)">
-                            YES
-                        </button>
-
-                        <button onclick="confirmSave('${safeCode}','${safeSi}',false)"
-                            style="background:red;">
-                            NO
-                        </button>
-                    </div>
-                `;
-
-                setTimeout(() => {
-                    document.getElementById("yesBtn")?.focus();
-                }, 100);
+                        ✅ FOUND<br><br>
+                        ${details}
+                    </div>`;
             }
 
             else if (data.status === "DUPLICATE") {
 
-                result.innerHTML = `
+                document.getElementById("result").innerHTML = `
                     <div class="card red">
                         ⚠ DUPLICATE<br><br>
-                        ${details}<br><br>
-
-                        <button onclick="confirmSave('${safeCode}','${safeSi}',false)">
-                            OK
-                        </button>
-                    </div>
-                `;
+                        ${details}
+                    </div>`;
             }
 
             else {
-                result.innerHTML = "❌ NOT FOUND";
+                document.getElementById("result").innerHTML = "❌ NOT FOUND";
             }
 
             isScanning = false;
@@ -205,38 +221,14 @@ async function startScan() {
 }
 
 
-// ================= CONFIRM =================
-async function confirmSave(code, siNo, ok) {
-
-    const result = getResult();
-
-    if (!ok) {
-        result.innerHTML = "❌ CANCELLED";
-        return;
-    }
-
-    const res = await fetch(API_URL + "?barcode=" + code + "&siNo=" + siNo);
-    const data = await res.json();
-
-    let colM = data.colM || "";
-    let lens = data.colJ || "";
-    let desc = data.colO || "";
-
-    result.innerHTML = `
-        <div class="card green">
-            ✅ SOLD<br><br>
-            <b>Col M:</b> ${colM}<br>
-            ${lens ? `<b>Lens:</b> ${lens}<br>` : ""}
-            <b>Description:</b> ${desc}
-        </div>
-    `;
-}
-
-
 // ================= SEARCH =================
 async function searchSI() {
 
-    const siNo = document.getElementById("siNo").value;
+    const siNo = document.getElementById("siNo").value.trim();
+
+    // 🔥 CLEAN SCAN RESULT BEFORE SEARCH
+    document.getElementById("result").innerHTML = "Ready";
+
     const out = document.getElementById("searchResult");
 
     const res = await fetch(API_URL + "?action=searchSI&siNo=" + siNo);
@@ -251,12 +243,13 @@ async function searchSI() {
 
     data.items.forEach((i, index) => {
 
-        html += `<div style="border:1px solid #ccc;margin:5px;padding:8px;">
-        #${index+1}<br>
-        Tag no.: ${i.colM}<br>
-        ${i.lens ? "Lens: " + i.lens + "<br>" : ""}
-        ${i.grade}<br>
-        ${i.barcode}
+        html += `
+        <div class="card">
+            #${index+1}<br>
+            <b>Col M:</b> ${i.colM}<br>
+            <b>Lens:</b> ${i.colJ}<br>
+            <b>Description:</b> ${i.colO}<br>
+            ${i.barcode}
         </div>`;
     });
 
@@ -266,9 +259,9 @@ async function searchSI() {
 
 // ================= REFRESH =================
 function refreshPage() {
+
     document.getElementById("siNo").value = "";
-    document.getElementById("result").innerHTML = "Ready";
-    document.getElementById("searchResult").innerHTML = "";
+    clearAllResults();
 
     if (scanner) {
         scanner.stop();
