@@ -160,13 +160,14 @@ button:active {
 
 <script>
 
+let sessionToken = "";
 let scanner = null;
 let isScanning = false;
 let isSaving = false;
 let tempCode = "";
 let tempSi = "";
 
-const API_URL = "https://script.google.com/macros/s/AKfycbzyn7lIBN0It_iXlR_cCvYOzLp0kJ2sV44D56GFDlaORW0hwaGM20sPIe6zniSXKEynig/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbwFE4b6qqPcuNJ8jXHBaaXXk0-XNuEPipPzRn-kxI9K7w71TNhhwVkH2Xqe__ZwWSE0_Q/exec";
 
 /* ================= LOGIN ================= */
 async function login() {
@@ -184,11 +185,15 @@ async function login() {
     const data = await res.json();
 
     if (data.status === "OK") {
-      document.getElementById("loginScreen").style.display = "none";
-      document.getElementById("app").style.display = "block";
-    } else {
-      document.getElementById("loginStatus").innerText = "❌ Wrong password";
-    }
+
+  sessionToken = data.token;
+
+  document.getElementById("loginScreen").style.display = "none";
+  document.getElementById("app").style.display = "block";
+
+} else {
+  document.getElementById("loginStatus").innerText = "❌ Wrong password";
+}
 
   } catch (err) {
     document.getElementById("loginStatus").innerText = "Server error";
@@ -270,7 +275,12 @@ async function toggleScan() {
       tempCode = code;
       tempSi = siNo;
 
-      const res = await fetch(API_URL + "?action=check&barcode=" + encodeURIComponent(code));
+     const res = await fetch(
+  API_URL +
+  "?action=check" +
+  "&token=" + encodeURIComponent(sessionToken) +
+  "&barcode=" + encodeURIComponent(code)
+);
       const data = await res.json();
 
       let row = data.row || [];
@@ -349,7 +359,12 @@ async function searchSI() {
 
   const siNo = document.getElementById("siNo").value;
 
-  const res = await fetch(API_URL + "?action=searchSI&siNo=" + encodeURIComponent(siNo));
+  const res = await fetch(
+  API_URL +
+  "?action=searchSI" +
+  "&token=" + encodeURIComponent(sessionToken) +
+  "&siNo=" + encodeURIComponent(siNo)
+);
   const data = await res.json();
 
   const out = document.getElementById("searchResult");
