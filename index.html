@@ -361,7 +361,7 @@ async function toggleScan() {
 
       else {
         document.getElementById("result").innerHTML = `
-          <div class="card red">
+          <div class="no-results">
             ❌ NOT FOUND<br><br>
             <b>${colO}</b><br>
             ${colJ ? `<small>${colJ}</small>` : ""}
@@ -443,7 +443,11 @@ function clearUI() {
 }
 
 function cancelNo() {
-  document.getElementById("result").innerHTML = "❌ CANCELLED";
+  document.getElementById("result").innerHTML = `
+  <div class="no-results">
+    ❌ CANCELLED
+  </div>
+`;
 }
 
 function refreshPage() {
