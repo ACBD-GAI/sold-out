@@ -380,16 +380,16 @@ async function toggleScan() {
         `;
       }
 
-      else if (data.status === "DUPLICATE") {
-        document.getElementById("result").innerHTML = `
-       <div class="card red">
-        ⚠ ALREADY SOLD<br><br>
-          <b>${colO}</b><br>
-         ${colJ ? `<small>${colJ}</small><br><br>` : ""}
-          <b>${code}</b>
-            </div>
-        `;
-      }
+     else if (data.status === "DUPLICATE") {
+  document.getElementById("result").innerHTML = `
+    <div class="card red">
+      🛑 ALREADY SOLD<br><br>
+      ${colJ ? `<small>${colJ}</small><br>` : ""}
+      <b>${colO}</b><br>
+      <b>${code}</b>
+    </div>
+  `;
+}
 
       else {
         document.getElementById("result").innerHTML = `
