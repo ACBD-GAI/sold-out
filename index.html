@@ -5,194 +5,271 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
 
 <style>
-body {
-  font-family: Arial;
-  margin: 0;
-  background: #eef2f7;
+
+
+:root {
+  --primary: #2563eb;
+  --primary-dark: #1d4ed8;
+  --success: #16a34a;
+  --danger: #dc2626;
+  --warning: #f97316;
+  --bg: #f3f6fb;
+  --card: #ffffff;
+  --text: #0f172a;
+  --muted: #64748b;
+
+  --radius: 16px;
+  --shadow: 0 10px 25px rgba(0,0,0,0.08);
+  --shadow-soft: 0 4px 12px rgba(0,0,0,0.06);
 }
 
-/* HEADER */
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial;
+  background: var(--bg);
+  color: var(--text);
+}
+
+/* HEADER (POS STYLE) */
 .header {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  padding: 12px;
-  background: linear-gradient(135deg, #2196f3, #1976d2);
-  color: white;
   position: sticky;
   top: 0;
   z-index: 1000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  padding: 14px;
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  color: white;
+  box-shadow: var(--shadow);
 }
 
 .header img {
   width: 40px;
   height: 40px;
+  border-radius: 10px;
   background: white;
-  border-radius: 8px;
   padding: 3px;
 }
 
-/* CONTAINER */
+/* APP CONTAINER */
 .container {
-  padding: 15px;
+  max-width: 520px;
+  margin: auto;
+  padding: 16px;
 }
 
-/* SCANNER */
-#reader {
-  width: 100%;
-  max-width: 360px;
-  margin: auto;
-  border-radius: 15px;
-  overflow: hidden;
+/* ================================
+   DASHBOARD CARDS (NEW)
+================================ */
+.dashboard {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.dash-card {
+  background: var(--card);
+  border-radius: var(--radius);
+  padding: 12px;
+  box-shadow: var(--shadow-soft);
+  text-align: center;
+}
+
+.dash-title {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.dash-value {
+  font-size: 16px;
+  font-weight: 700;
+  margin-top: 4px;
 }
 
 /* INPUT */
 input {
-  padding: 14px;
   width: 100%;
-  font-size: 16px;
-  border-radius: 12px;
-  border: none;
-  margin-top: 12px;
+  padding: 14px;
+  border-radius: var(--radius);
+  border: 1px solid #e2e8f0;
+  font-size: 15px;
+  background: white;
+  outline: none;
+  transition: 0.2s;
+}
+
+input:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(37,99,235,0.15);
 }
 
 /* BUTTONS */
 button {
-  padding: 14px;
   width: 100%;
   margin-top: 10px;
+  padding: 14px;
   border: none;
-  border-radius: 14px;
-  font-weight: bold;
+  border-radius: var(--radius);
+  font-weight: 700;
   cursor: pointer;
-  transition: all 0.25s ease;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.12);
-}
-
-button:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 10px 18px rgba(0,0,0,0.18);
+  transition: 0.2s ease;
+  box-shadow: var(--shadow-soft);
 }
 
 button:active {
-  transform: translateY(1px) scale(0.98);
+  transform: scale(0.98);
 }
 
-.btn-blue {
-  background: linear-gradient(135deg, #2196f3, #1976d2);
+.btn-primary {
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
   color: white;
 }
 
-.btn-orange {
-  background: linear-gradient(135deg, #ff7043, #ff5722);
+.btn-danger {
+  background: linear-gradient(135deg, var(--danger), #b91c1c);
   color: white;
 }
 
-/* CARD */
+.btn-warning {
+  background: linear-gradient(135deg, var(--warning), #ea580c);
+  color: white;
+}
+
+/* ================================
+   SCANNER BOX
+================================ */
+#reader {
+  border-radius: var(--radius);
+  overflow: hidden;
+  box-shadow: var(--shadow);
+  margin-top: 10px;
+}
+
+/* ================================
+   RESULT CARD (MAIN FOCUS)
+================================ */
 .card {
-  padding: 15px;
-  border-radius: 15px;
-  margin-top: 12px;
   background: white;
+  border-radius: var(--radius);
+  padding: 16px;
+  margin-top: 12px;
+  box-shadow: var(--shadow-soft);
+  transition: 0.2s ease;
 }
 
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow);
+}
+
+/* STATUS LEFT BAR */
 .green {
-  border-left: 6px solid #2ecc71;
+  border-left: 6px solid var(--success);
 }
 
 .red {
-  border-left: 6px solid #e74c3c;
-}
-  /* SAVING CARD */
-.saving {
-  border-left: 6px solid #2196f3;
-  text-align: center;
-  padding: 25px;
-  background: linear-gradient(135deg, #e3f2fd, #ffffff);
-  color: #1976d2;
-  font-weight: bold;
+  border-left: 6px solid var(--danger);
 }
 
-/* SPINNER */
+/* ================================
+   STATUS CHIPS (NEW)
+================================ */
+.chip {
+  display: inline-block;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.chip-success {
+  background: rgba(22,163,74,0.12);
+  color: var(--success);
+}
+
+.chip-danger {
+  background: rgba(220,38,38,0.12);
+  color: var(--danger);
+}
+
+.chip-warning {
+  background: rgba(249,115,22,0.12);
+  color: var(--warning);
+}
+
+/* ================================
+   LOADING STATE
+================================ */
+.saving {
+  text-align: center;
+  padding: 26px;
+  border-radius: var(--radius);
+  background: linear-gradient(135deg, #e0f2fe, #ffffff);
+  box-shadow: var(--shadow-soft);
+}
+
 .spinner {
-  width: 35px;
-  height: 35px;
-  margin: 0 auto 10px;
-  border: 4px solid #cfe8ff;
-  border-top: 4px solid #2196f3;
+  width: 34px;
+  height: 34px;
+  margin: auto;
+  border: 4px solid #dbeafe;
+  border-top: 4px solid var(--primary);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }
 
-/* TEXT STYLE */
-.saving-text {
-  font-size: 16px;
-  letter-spacing: 0.5px;
-}
-
-/* ANIMATION */
 @keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
+  to { transform: rotate(360deg); }
 }
 
-  .no-results {
+/* ================================
+   EMPTY STATE
+================================ */
+.no-results {
   text-align: center;
-  margin-top: 20px;
-  padding: 20px;
-  font-weight: bold;
-  color: #666;
+  padding: 18px;
+  border-radius: var(--radius);
   background: white;
-  border-radius: 12px;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.08);
-  animation: fadeIn 0.3s ease-in-out;
+  color: var(--muted);
+  box-shadow: var(--shadow-soft);
+  font-weight: 600;
+  margin-top: 12px;
 }
 
-/* optional smooth appearance */
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-  /* SCAN SUCCESS ANIMATION CARD */
+/* ================================
+   SCAN ANIMATION
+================================ */
 .scan-animate {
-  animation: popIn 0.35s ease-out, glow 1s ease-in-out;
-  transform-origin: center;
+  animation: pop 0.25s ease-out, glow 1s ease;
 }
 
-/* POP IN EFFECT */
-@keyframes popIn {
-  from {
-    transform: scale(0.8);
-    opacity: 0;
-  }
-  to {
-    transform: scale(1);
-    opacity: 1;
-  }
+@keyframes pop {
+  from { transform: scale(0.92); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
 }
 
-/* GLOW EFFECT */
 @keyframes glow {
-  0% {
-    box-shadow: 0 0 0 rgba(46, 204, 113, 0);
-  }
-  50% {
-    box-shadow: 0 0 25px rgba(46, 204, 113, 0.8);
-  }
-  100% {
-    box-shadow: 0 0 0 rgba(46, 204, 113, 0);
-  }
+  0% { box-shadow: 0 0 0 rgba(22,163,74,0); }
+  50% { box-shadow: 0 0 18px rgba(22,163,74,0.5); }
+  100% { box-shadow: 0 0 0 rgba(22,163,74,0); }
 }
-  
+
+/* ================================
+   LOGIN SCREEN
+================================ */
+#loginScreen {
+  background: #f3f6fb;
+}
+
+
 </style>
 </head>
 
