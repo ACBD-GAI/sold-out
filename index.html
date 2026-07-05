@@ -205,37 +205,34 @@ async function toggleScan() {
   isScanning = true;
   setUIScanning(true);
 
-  const devices = await Html5Qrcode.getCameras();
-
-  let cameraId = null;
-
-  // PRIORITY: back camera
-  for (let d of devices) {
-    const label = (d.label || "").toLowerCase();
-    if (
-      label.includes("back") ||
-      label.includes("rear") ||
-      label.includes("environment")
-    ) {
-      cameraId = d.id;
-      break;
-    }
-  }
-
-  // fallback
-  if (!cameraId && devices.length > 0) {
-    cameraId = devices[0].id;
-  }
-
-  scanner = new Html5Qrcode("reader");
-
   try {
+    const devices = await Html5Qrcode.getCameras();
+
+    if (!devices || devices.length === 0) {
+      alert("No camera found");
+      isScanning = false;
+      setUIScanning(false);
+      return;
+    }
+
+    // Prefer back camera
+    let cameraId = devices[0].id;
+
+    for (let d of devices) {
+      const label = (d.label || "").toLowerCase();
+      if (label.includes("back") || label.includes("rear")) {
+        cameraId = d.id;
+        break;
+      }
+    }
+
+    scanner = new Html5Qrcode("reader");
+
     await scanner.start(
       cameraId,
       {
         fps: 10,
-        qrbox: 250,
-        facingMode: "environment"
+        qrbox: 250
       },
       async (code) => {
 
@@ -283,7 +280,6 @@ async function toggleScan() {
     setUIScanning(false);
   }
 }
-
 /* ================= SAVE ================= */
 async function saveYes() {
   if (isSaving) return;
