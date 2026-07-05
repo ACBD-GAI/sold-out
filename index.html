@@ -150,7 +150,7 @@ button:active { transform: translateY(1px) scale(0.98); }
 
 <script>
 
-const API_URL = "https://script.google.com/macros/s/AKfycbwjDQisLCHe_I5VQO_HcbOqM3b4jCWdoRtTJ5EdSvYQLZNZBSwnTG1AoyVcVZmtgWK85w/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbwpeyJLOGjzBbhkv7gxdLKgnXOdUYCPG77aFT04EAn24_sdPqzyYPrTZNwULk8ak6B1TQ/exec";
 
 let scanner = null;
 let isScanning = false;
@@ -185,64 +185,70 @@ async function toggleScan() {
   const siNo = document.getElementById("siNo").value;
   if (!siNo) return alert("Enter SI No");
 
+  // STOP SCANNING
   if (isScanning) {
     isScanning = false;
-    if (scanner) {
-      await scanner.stop();
-      await scanner.clear();
-      scanner = null;
-    }
+
+    try {
+      if (scanner) {
+        await scanner.stop();
+        await scanner.clear();
+        scanner = null;
+      }
+    } catch (e) {}
+
     setUIScanning(false);
     return;
   }
 
   clearUI();
-
   isScanning = true;
   setUIScanning(true);
 
   const devices = await Html5Qrcode.getCameras();
 
-let cameraId = null;
+  let cameraId = null;
 
-// try to find back/rear camera
-for (let d of devices) {
-  const label = (d.label || "").toLowerCase();
-
-  if (
-    label.includes("back") ||
-    label.includes("rear") ||
-    label.includes("environment")
-  ) {
-    cameraId = d.id;
-    break;
+  // PRIORITY: back camera
+  for (let d of devices) {
+    const label = (d.label || "").toLowerCase();
+    if (
+      label.includes("back") ||
+      label.includes("rear") ||
+      label.includes("environment")
+    ) {
+      cameraId = d.id;
+      break;
+    }
   }
-}
 
-// fallback if not found
-if (!cameraId && devices.length > 0) {
-  cameraId = devices[0].id;
-}
+  // fallback
+  if (!cameraId && devices.length > 0) {
+    cameraId = devices[0].id;
+  }
 
   scanner = new Html5Qrcode("reader");
 
   try {
     await scanner.start(
-  cameraId,
-  {
-    fps: 10,
-    qrbox: 250,
-    facingMode: "environment" // 👈 forces back camera
-  },
-  async (code) => { {
+      cameraId,
+      {
+        fps: 10,
+        qrbox: 250,
+        facingMode: "environment"
+      },
+      async (code) => {
 
         if (!isScanning) return;
 
         isScanning = false;
-        await scanner.stop();
-        await scanner.clear();
-        scanner = null;
 
+        try {
+          await scanner.stop();
+          await scanner.clear();
+        } catch (e) {}
+
+        scanner = null;
         setUIScanning(false);
 
         tempCode = code;
@@ -258,7 +264,9 @@ if (!cameraId && devices.length > 0) {
         if (data.status === "FOUND") {
           document.getElementById("result").innerHTML =
             `<div class="card green scan-animate">
-              ✅ AVAILABLE<br><b>${colO}</b><br>${code}
+              ✅ AVAILABLE<br>
+              <b>${colO}</b><br>
+              ${code}
               <br><button class="btn-blue" onclick="saveYes()">ADD TO SOLD</button>
             </div>`;
         } else {
@@ -267,8 +275,10 @@ if (!cameraId && devices.length > 0) {
         }
       }
     );
+
   } catch (err) {
-    alert("Camera error");
+    console.error(err);
+    alert("Camera error or permission denied");
     isScanning = false;
     setUIScanning(false);
   }
@@ -308,7 +318,11 @@ async function searchSI() {
   }
 
   let html = data.items.map((item, i) =>
-    `<div class="card">#${i+1}<br><b>${item.colO}</b><br>${item.barcode}</div>`
+    `<div class="card">
+      #${i + 1}<br>
+      <b>${item.colO}</b><br>
+      ${item.barcode}
+    </div>`
   ).join("");
 
   if (lastUploadedPhotos.length === 2) {
@@ -342,6 +356,7 @@ document.getElementById("cameraInput").addEventListener("change", (e) => {
   e.target.value = "";
 });
 
+/* ================= UPLOAD ================= */
 async function uploadPhotos() {
   const siNo = document.getElementById("siNo").value.trim();
   if (!siNo) return alert("Enter SI No");
@@ -366,6 +381,9 @@ async function uploadPhotos() {
 
     document.getElementById("result").innerHTML =
       `<div class="card green">✅ UPLOADED</div>`;
+  } else {
+    document.getElementById("result").innerHTML =
+      `<div class="card red">❌ ${data.status}</div>`;
   }
 }
 
@@ -382,7 +400,6 @@ function fileToBase64(file) {
     r.readAsDataURL(file);
   });
 }
-
 </script>
 
 </body>
