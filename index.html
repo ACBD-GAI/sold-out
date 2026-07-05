@@ -243,8 +243,8 @@ button:active {
     <!-- CAMERA CAPTURE MODULE -->
 <input id="cameraInput" type="file" accept="image/*" capture="environment" multiple style="display:none" />
 
-<button class="btn-blue" onclick="document.getElementById('cameraInput').click()">
-  📸 CAPTURE 2 PHOTOS
+<button class="btn-blue" onclick="openCamera()">
+  📸 CAPTURE PHOTO
 </button>
 
 <div id="photoPreview" style="display:flex; gap:10px; margin-top:10px;"></div>
@@ -503,6 +503,9 @@ function refreshPage() {
   document.getElementById("siNo").value = "";
   clearUI();
 }
+  function openCamera() {
+  document.getElementById("cameraInput").click();
+}
 
 
 
@@ -553,8 +556,17 @@ document.addEventListener("click", initAudio, { once: true });
 
 let selectedFiles = [];
 
-  document.getElementById("cameraInput").addEventListener("change", function (e) {
-  selectedFiles = Array.from(e.target.files);
+document.getElementById("cameraInput").addEventListener("change", function (e) {
+
+  const newFiles = Array.from(e.target.files);
+
+  // ADD instead of replace (IMPORTANT)
+  selectedFiles = selectedFiles.concat(newFiles);
+
+  // keep only last 2 photos
+  if (selectedFiles.length > 2) {
+    selectedFiles = selectedFiles.slice(-2);
+  }
 
   const preview = document.getElementById("photoPreview");
   preview.innerHTML = "";
@@ -568,6 +580,10 @@ let selectedFiles = [];
     img.src = URL.createObjectURL(file);
     preview.appendChild(img);
   });
+
+  // reset input so same file can be selected again
+  e.target.value = "";
+});
 });
   async function uploadPhotos() {
   if (selectedFiles.length !== 2) {
