@@ -11,7 +11,6 @@ body {
   background: #eef2f7;
 }
 
-/* HEADER */
 .header {
   display: flex;
   align-items: center;
@@ -33,12 +32,8 @@ body {
   padding: 3px;
 }
 
-/* CONTAINER */
-.container {
-  padding: 15px;
-}
+.container { padding: 15px; }
 
-/* SCANNER */
 #reader {
   width: 100%;
   max-width: 360px;
@@ -47,7 +42,6 @@ body {
   overflow: hidden;
 }
 
-/* INPUT */
 input {
   padding: 14px;
   width: 100%;
@@ -57,7 +51,6 @@ input {
   margin-top: 12px;
 }
 
-/* BUTTONS */
 button {
   padding: 14px;
   width: 100%;
@@ -66,17 +59,6 @@ button {
   border-radius: 14px;
   font-weight: bold;
   cursor: pointer;
-  transition: all 0.25s ease;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.12);
-}
-
-button:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 10px 18px rgba(0,0,0,0.18);
-}
-
-button:active {
-  transform: translateY(1px) scale(0.98);
 }
 
 .btn-blue {
@@ -89,7 +71,6 @@ button:active {
   color: white;
 }
 
-/* CARD */
 .card {
   padding: 15px;
   border-radius: 15px;
@@ -97,49 +78,27 @@ button:active {
   background: white;
 }
 
-.green {
-  border-left: 6px solid #2ecc71;
-}
-
-.red {
-  border-left: 6px solid #e74c3c;
-}
+.green { border-left: 6px solid #2ecc71; }
+.red { border-left: 6px solid #e74c3c; }
 </style>
 </head>
 
 <body>
 
-
-<div id="loginScreen" style="
-  position: fixed;
-  top:0; left:0;
-  width:100%; height:100%;
-  background:#eef2f7;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  flex-direction:column;
-  z-index:9999;
-">
-
+<!-- LOGIN -->
+<div id="loginScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#eef2f7;display:flex;align-items:center;justify-content:center;flex-direction:column;z-index:9999;">
   <h2>🔐 SYSTEM LOGIN</h2>
-
-  <input id="password" type="password" placeholder="Enter Password"
-    style="padding:14px; width:80%; max-width:300px; border-radius:10px; border:none;">
-
-  <button class="btn-blue" style="width:80%; max-width:300px;" onclick="login()">
-    LOGIN
-  </button>
-
+  <input id="password" type="password" placeholder="Enter Password" style="padding:14px;width:80%;max-width:300px;border-radius:10px;border:none;">
+  <button class="btn-blue" style="width:80%;max-width:300px;" onclick="login()">LOGIN</button>
   <p id="loginStatus"></p>
 </div>
 
-
+<!-- APP -->
 <div id="app" style="display:none;">
 
   <div class="header">
     <img src="https://drive.google.com/thumbnail?id=1tOeVr8yecFf_REL9zHznEh9Qs2clqVrt&sz=w200">
-    <h3 style="margin:0;">GAISANO ILOILO</h3>
+    <h3>GAISANO ILOILO</h3>
   </div>
 
   <div class="container">
@@ -148,7 +107,7 @@ button:active {
 
     <input id="siNo" placeholder="Enter SI No">
 
-    <button id="scanBtn" class="btn-blue" onclick="toggleScan()">📷 START SCAN</button>
+    <button class="btn-blue" onclick="toggleScan()">📷 START SCAN</button>
     <button class="btn-blue" onclick="searchSI()">🔍 SEARCH SI</button>
     <button class="btn-orange" onclick="refreshPage()">♻ REFRESH</button>
 
@@ -167,70 +126,31 @@ let isSaving = false;
 let tempCode = "";
 let tempSi = "";
 
-const API_URL = "https://script.google.com/macros/s/AKfycbzSrtuekttX8nR5eTdKzgVSZq_9zIymAQ0OhLT4feSwHecV5zyaj6InfJOF0yLSuh5mfw/exec";
+const API_URL = "YOUR_GOOGLE_SCRIPT_URL_HERE";
 
 /* ================= LOGIN ================= */
 async function login() {
   const pass = document.getElementById("password").value;
 
-  if (!pass) {
-    document.getElementById("loginStatus").innerText = "Enter password";
-    return;
-  }
+  const res = await fetch(API_URL + "?action=login&password=" + encodeURIComponent(pass));
+  const data = await res.json();
 
-  document.getElementById("loginStatus").innerText = "Checking...";
-
-  try {
-    const res = await fetch(API_URL + "?action=login&password=" + encodeURIComponent(pass));
-    const data = await res.json();
-
-    if (data.status === "OK") {
-
-  sessionToken = data.token;
-
-  document.getElementById("loginScreen").style.display = "none";
-  document.getElementById("app").style.display = "block";
-
-} else {
-  document.getElementById("loginStatus").innerText = "❌ Wrong password";
-}
-
-  } catch (err) {
-    document.getElementById("loginStatus").innerText = "Server error";
-  }
-}
-
-
-function setUIScanning(state) {
-  const btn = document.getElementById("scanBtn");
-  const siBox = document.getElementById("siNo");
-  const reader = document.getElementById("reader");
-  const refreshBtn = document.querySelector(".btn-orange");
-
-  if (state) {
-    btn.innerHTML = "⛔ STOP SCANNING";
-    siBox.disabled = true;
-    reader.style.display = "block";
-    refreshBtn.disabled = true;
-    refreshBtn.style.opacity = "0.5";
+  if (data.status === "OK") {
+    sessionToken = data.token;
+    document.getElementById("loginScreen").style.display = "none";
+    document.getElementById("app").style.display = "block";
   } else {
-    btn.innerHTML = "📷 START SCAN";
-    siBox.disabled = false;
-    reader.style.display = "none";
-    refreshBtn.disabled = false;
-    refreshBtn.style.opacity = "1";
+    document.getElementById("loginStatus").innerText = "❌ Wrong password";
   }
 }
 
-
-
+/* ================= SCAN ================= */
 async function toggleScan() {
   const siNo = document.getElementById("siNo").value;
   if (!siNo) return alert("Enter SI No");
 
   if (isScanning) {
     isScanning = false;
-    setUIScanning(false);
     if (scanner) {
       await scanner.stop();
       await scanner.clear();
@@ -239,20 +159,10 @@ async function toggleScan() {
     return;
   }
 
-  clearUI();
   isScanning = true;
-  setUIScanning(true);
 
   const devices = await Html5Qrcode.getCameras();
   let cameraId = devices[0].id;
-
-  for (let d of devices) {
-    const label = (d.label || "").toLowerCase();
-    if (label.includes("back") || label.includes("rear")) {
-      cameraId = d.id;
-      break;
-    }
-  }
 
   scanner = new Html5Qrcode("reader");
 
@@ -267,7 +177,6 @@ async function toggleScan() {
       await scanner.stop();
       await scanner.clear();
       scanner = null;
-      setUIScanning(false);
 
       beep();
       vibrate();
@@ -275,133 +184,70 @@ async function toggleScan() {
       tempCode = code;
       tempSi = siNo;
 
-     const res = await fetch(
-  API_URL +
-  "?action=check" +
-  "&token=" + encodeURIComponent(sessionToken) +
-  "&barcode=" + encodeURIComponent(code)
-);
+      const res = await fetch(
+        API_URL +
+        "?action=check" +
+        "&token=" + encodeURIComponent(sessionToken) +
+        "&barcode=" + encodeURIComponent(code)
+      );
+
       const data = await res.json();
 
-      let row = data.row || [];
-      let colJ = data.colJ || row?.[9] || "";
-      let colO = data.colO || row?.[14] || "";
-
-      if (data.status === "FOUND") {
-        document.getElementById("result").innerHTML = `
-          <div class="card green">
-            ✅ AVAILABLE<br><br>
-            <b>${colO}</b><br>
-            <b>${code}</b><br>
-            ${colJ ? `<small>${colJ}</small><br>` : ""}
-            <br>
-            <button id="saveBtn" class="btn-blue" onclick="saveYes()">ADD TO SOLD</button>
-            <button class="btn-orange" onclick="cancelNo()">CANCEL</button>
-          </div>
-        `;
-      }
-
-      else if (data.status === "DUPLICATE") {
-        document.getElementById("result").innerHTML = `
-          <div class="card red">
-            ⚠ ALREADY SOLD<br><br>
-            <b>${colO}</b><br>
-            <b>${code}</b><br>
-            ${colJ ? `<small>${colJ}</small>` : ""}
-          </div>
-        `;
-      }
-
-      else {
-        document.getElementById("result").innerHTML = `
-          <div class="card red">
-            ❌ NOT FOUND<br><br>
-            <b>${colO}</b><br>
-            ${colJ ? `<small>${colJ}</small>` : ""}
-          </div>
-        `;
-      }
+      document.getElementById("result").innerHTML =
+        data.status === "FOUND"
+        ? `<div class="card green">✔ FOUND<br>${code}<br><button onclick="saveYes()">SAVE</button></div>`
+        : `<div class="card red">❌ ${data.status}</div>`;
     }
   );
 }
 
+/* ================= SAVE ================= */
 async function saveYes() {
   if (isSaving) return;
   isSaving = true;
 
-  document.getElementById("saveBtn").disabled = true;
   document.getElementById("result").innerHTML = "⏳ Saving...";
 
-  const res = await fetch(API_URL +
-    "?action=save&barcode=" + encodeURIComponent(tempCode) +
-    "&siNo=" + encodeURIComponent(tempSi));
+  const res = await fetch(
+    API_URL +
+    "?action=save" +
+    "&token=" + encodeURIComponent(sessionToken) +
+    "&barcode=" + encodeURIComponent(tempCode) +
+    "&siNo=" + encodeURIComponent(tempSi)
+  );
 
   const data = await res.json();
 
-  let row = data.row || [];
-  let colJ = data.colJ || row?.[9] || "";
-  let colO = data.colO || row?.[14] || "";
-
-  document.getElementById("result").innerHTML = `
-    <div class="card green">
-      ✅ ${data.status}<br><br>
-      <b>${colO}</b><br>
-      <b>${tempCode}</b><br>
-      ${colJ ? `<small>${colJ}</small>` : ""}
-    </div>
-  `;
+  document.getElementById("result").innerHTML =
+    `<div class="card green">✅ ${data.status}</div>`;
 
   isSaving = false;
 }
 
+/* ================= SEARCH ================= */
 async function searchSI() {
-  clearUI();
-
   const siNo = document.getElementById("siNo").value;
 
   const res = await fetch(
-  API_URL +
-  "?action=searchSI" +
-  "&token=" + encodeURIComponent(sessionToken) +
-  "&siNo=" + encodeURIComponent(siNo)
-);
+    API_URL +
+    "?action=searchSI" +
+    "&token=" + encodeURIComponent(sessionToken) +
+    "&siNo=" + encodeURIComponent(siNo)
+  );
+
   const data = await res.json();
 
-  const out = document.getElementById("searchResult");
-
-  if (!data.items?.length) {
-    out.innerHTML = "No results";
-    return;
-  }
-
-  out.innerHTML = data.items.map((item, idx) => `
-    <div class="card">
-      #${idx + 1}<br>
-      <b>${item.colO}</b><br>
-      ${item.colJ ? `<small>${item.colJ}</small><br>` : ""}
-      ${item.barcode}
-    </div>
-  `).join("");
+  document.getElementById("searchResult").innerHTML =
+    JSON.stringify(data.items || []);
 }
 
 /* ================= UTIL ================= */
-
-function clearUI() {
-  document.getElementById("result").innerHTML = "Ready";
-  document.getElementById("searchResult").innerHTML = "";
-}
-
-function cancelNo() {
-  document.getElementById("result").innerHTML = "❌ CANCELLED";
-}
-
 function refreshPage() {
   document.getElementById("siNo").value = "";
-  clearUI();
+  document.getElementById("result").innerHTML = "Ready";
 }
 
-
-
+/* ================= SOUND ================= */
 let audioCtx = null;
 
 function initAudio() {
