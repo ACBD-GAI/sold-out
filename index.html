@@ -202,15 +202,39 @@ async function toggleScan() {
   setUIScanning(true);
 
   const devices = await Html5Qrcode.getCameras();
-  let cameraId = devices[0].id;
+
+let cameraId = null;
+
+// try to find back/rear camera
+for (let d of devices) {
+  const label = (d.label || "").toLowerCase();
+
+  if (
+    label.includes("back") ||
+    label.includes("rear") ||
+    label.includes("environment")
+  ) {
+    cameraId = d.id;
+    break;
+  }
+}
+
+// fallback if not found
+if (!cameraId && devices.length > 0) {
+  cameraId = devices[0].id;
+}
 
   scanner = new Html5Qrcode("reader");
 
   try {
     await scanner.start(
-      cameraId,
-      { fps: 10, qrbox: 250 },
-      async (code) => {
+  cameraId,
+  {
+    fps: 10,
+    qrbox: 250,
+    facingMode: "environment" // 👈 forces back camera
+  },
+  async (code) => { {
 
         if (!isScanning) return;
 
