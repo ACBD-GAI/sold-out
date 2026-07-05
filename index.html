@@ -558,34 +558,38 @@ let selectedFiles = [];
 
 document.getElementById("cameraInput").addEventListener("change", function (e) {
 
-  const newFiles = Array.from(e.target.files);
+  const file = e.target.files[0];
+  if (!file) return;
 
-  selectedFiles = [...newFiles]; // ✅ fixed
+  // add 1 photo at a time
+  selectedFiles.push(file);
 
-
-  if (selectedFiles.length < 2) {
-    alert("Please capture 2 photos");
-    return;
-  }
-
+  // show preview
   const preview = document.getElementById("photoPreview");
-  preview.innerHTML = "";
 
-  selectedFiles.forEach(file => {
-    const img = document.createElement("img");
-    img.style.width = "80px";
-    img.style.height = "80px";
-    img.style.objectFit = "cover";
-    img.style.borderRadius = "10px";
-    img.src = URL.createObjectURL(file);
-    preview.appendChild(img);
-  });
+  const img = document.createElement("img");
+  img.style.width = "80px";
+  img.style.height = "80px";
+  img.style.objectFit = "cover";
+  img.style.borderRadius = "10px";
+  img.src = URL.createObjectURL(file);
+
+  preview.appendChild(img);
 
   e.target.value = "";
+
+  // optional message
+  if (selectedFiles.length === 1) {
+    alert("Photo 1 saved. Now take Photo 2.");
+  }
+
+  if (selectedFiles.length === 2) {
+    alert("2 photos ready. You can now upload.");
+  }
 });
-  async function uploadPhotos() {
+async function uploadPhotos() {
   if (selectedFiles.length !== 2) {
-    alert("Please select exactly 2 photos");
+    alert("Please capture 2 photos first (exactly 2 required)");
     return;
   }
 
@@ -615,7 +619,7 @@ document.getElementById("cameraInput").addEventListener("change", function (e) {
 
     if (data.status === "OK") {
       selectedFiles = [];
-document.getElementById("photoPreview").innerHTML = "";
+      document.getElementById("photoPreview").innerHTML = "";
       document.getElementById("result").innerHTML = `
         <div class="card green">
           ✅ Upload successful<br><br>
