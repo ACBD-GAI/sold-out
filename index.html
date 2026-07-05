@@ -260,7 +260,6 @@ button:active {
 
 <script>
 
-let lastUploadedPhotos = [];
 let scanner = null;
 let isScanning = false;
 let isSaving = false;
@@ -285,7 +284,6 @@ async function login() {
     const data = await res.json();
 
     if (data.status === "OK") {
-      lastUploadedPhotos = [data.link1, data.link2];
       document.getElementById("loginScreen").style.display = "none";
       document.getElementById("app").style.display = "block";
       lastUploadedPhotos = [data.link1, data.link2];
@@ -461,14 +459,12 @@ lastUploadedPhotos = [];
 async function searchSI() {
   clearUI();
 
-  const out = document.getElementById("searchResult");
-
   const siNo = document.getElementById("siNo").value;
 
   const res = await fetch(API_URL + "?action=searchSI&siNo=" + encodeURIComponent(siNo));
   const data = await res.json();
 
-  
+  const out = document.getElementById("searchResult");
 
   if (!data.items?.length) {
     out.innerHTML = `
@@ -488,7 +484,7 @@ async function searchSI() {
     </div>
   `).join("");
 }
-  let photoHTML = "";
+let photoHTML = "";
 
 if (lastUploadedPhotos.length === 2) {
   photoHTML = `
@@ -501,7 +497,6 @@ if (lastUploadedPhotos.length === 2) {
 }
 
 out.innerHTML += photoHTML;
-
 /* ================= UTIL ================= */
 
 function clearUI() {
@@ -637,7 +632,6 @@ async function uploadPhotos() {
     const data = await res.json();
 
     if (data.status === "OK") {
-      lastUploadedPhotos = [data.link1, data.link2];
       selectedFiles = [];
       document.getElementById("photoPreview").innerHTML = "";
       document.getElementById("result").innerHTML = `
