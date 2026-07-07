@@ -352,6 +352,17 @@ VERIFY OTP
   <div class="header">
     <img src="https://drive.google.com/thumbnail?id=1U9kmQ7qummOCpVppdLtmVaugMuzLYUWQ&sz=w200">
     <h3 style="margin:0;">GAISANO ILOILO BRANCH</h3>
+     <button
+        onclick="logout()"
+        style="
+            position:absolute;
+            right:10px;
+            width:auto;
+            padding:8px 14px;
+            margin:0;
+        ">
+        Logout
+    </button>
   </div>
 
   <div class="container">
@@ -434,6 +445,9 @@ const data=await res.json();
 
 
 if(data.status==="OK"){
+  
+localStorage.setItem("inventoryLoggedIn", "true");
+localStorage.setItem("inventoryEmail", email);
 
 document.getElementById("loginScreen").style.display="none";
 document.getElementById("app").style.display="block";
@@ -688,6 +702,24 @@ function vibrate() {
 }
 
 document.addEventListener("click", initAudio, { once: true });
+
+  function logout() {
+
+    localStorage.removeItem("inventoryLoggedIn");
+    localStorage.removeItem("inventoryEmail");
+
+    location.reload();
+
+}
+
+  window.onload = function () {
+
+    if(localStorage.getItem("inventoryLoggedIn") === "true"){
+        document.getElementById("loginScreen").style.display = "none";
+        document.getElementById("app").style.display = "block";
+    }
+
+};
 
 </script>
 
