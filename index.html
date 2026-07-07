@@ -743,8 +743,8 @@ window.addEventListener("DOMContentLoaded", function () {
     const loggedIn = localStorage.getItem("inventoryLoggedIn") === "true";
     const loginTime = Number(localStorage.getItem("loginTime"));
 
-    // 12 hours in milliseconds
-    const SESSION_TIME = 10 * 1000;
+  
+    const SESSION_TIME = 12 * 60 * 60 * 1000;
 
     if (
         loggedIn &&
