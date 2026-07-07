@@ -255,11 +255,10 @@ let isSaving = false;
 let tempCode = "";
 let tempSi = "";
 
-const API_URL = "https://script.google.com/macros/s/AKfycbwoBNVrYV7nWBb3PJsXPWqr2K723O1MbKRXQZkBHoHds2fZ_lUYY9A2ZNKKnBt4Hz-YTQ/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbxbKcWSqhV3HSNaOr-0WHY2NKBbcOVT10k7HXfFCnYmXC0dPmob2-jjhNnjfYSOB0owuA/exec";
 
 /* ================= LOGIN ================= */
 async function login() {
-
   const pass = document.getElementById("password").value;
 
   if (!pass) {
@@ -270,25 +269,23 @@ async function login() {
   document.getElementById("loginStatus").innerText = "Checking...";
 
   try {
-
-    const res = await fetch(
-      API_URL + "?action=login&password=" + encodeURIComponent(pass)
-    );
-
+    const res = await fetch(API_URL + "?action=login&password=" + encodeURIComponent(pass));
     const data = await res.json();
 
     if (data.status === "OK") {
       document.getElementById("loginScreen").style.display = "none";
       document.getElementById("app").style.display = "block";
     } else {
-      document.getElementById("loginStatus").innerText = data.status;
+      document.getElementById("loginStatus").innerText = "❌ Wrong password";
     }
 
   } catch (err) {
-    document.getElementById("loginStatus").innerText = "Failed to fetch";
-    console.log(err);
+    document.getElementById("loginStatus").innerText = "Server error";
   }
-}function setUIScanning(state) {
+}
+
+
+function setUIScanning(state) {
   const btn = document.getElementById("scanBtn");
   const siBox = document.getElementById("siNo");
   const reader = document.getElementById("reader");
