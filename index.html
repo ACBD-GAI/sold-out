@@ -275,9 +275,24 @@ async function login() {
     if (data.status === "OK") {
       document.getElementById("loginScreen").style.display = "none";
       document.getElementById("app").style.display = "block";
-    } else {
-      document.getElementById("loginStatus").innerText = "❌ Wrong password";
-    }
+   else {
+
+  if (data.status === "EMAIL NOT ALLOWED") {
+    document.getElementById("loginStatus").innerText =
+      "❌ Gmail account not authorized";
+  }
+
+  else if (data.status === "NO GOOGLE ACCOUNT") {
+    document.getElementById("loginStatus").innerText =
+      "❌ Please sign in with Google";
+  }
+
+  else {
+    document.getElementById("loginStatus").innerText =
+      "❌ Wrong password";
+  }
+
+}
 
   } catch (err) {
     document.getElementById("loginStatus").innerText = "Server error";
