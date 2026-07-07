@@ -13,56 +13,39 @@ body {
 
 /* HEADER */
 /* HEADER */
-.header{
+.header {
     display:flex;
     justify-content:space-between;
     align-items:center;
-
     padding:10px 15px;
-
-    background:linear-gradient(135deg,#2196f3,#1976d2);
-    color:white;
-
-    position:sticky;
-    top:0;
-    z-index:1000;
 }
 
-.header-left{
+.header-left {
     display:flex;
     align-items:center;
     gap:10px;
+    flex:1; /* allows the title area to use available space */
 }
 
-.header-left img{
-    width:40px;
-    height:40px;
-    background:#fff;
-    border-radius:8px;
-    padding:3px;
-}
-
-.header-left h3{
+.header-left h3 {
     margin:0;
-    font-size:18px;
-    font-weight:bold;
+    font-size:16px; /* smaller title */
 }
 
-.logout-btn{
+.logout-btn {
     width:auto;
     margin:0;
-    padding:8px 14px;
+    padding:5px 10px; /* smaller button */
+    font-size:12px;   /* smaller text */
 
     background:#fff;
     color:#1976d2;
 
     border:none;
-    border-radius:10px;
+    border-radius:8px;
 
     font-weight:bold;
     cursor:pointer;
-
-    box-shadow:none;
 }
 /* CONTAINER */
 .container {
@@ -384,7 +367,7 @@ VERIFY OTP
 
     <div class="header-left">
         <img src="https://drive.google.com/thumbnail?id=1U9kmQ7qummOCpVppdLtmVaugMuzLYUWQ&sz=w200">
-        <h3>GAISANO ILOILO BRANCH </h3>
+        <h3>GAISANO ILOILO BRANCH</h3>&nbsp;&nbsp;
     </div>
 
     <button class="logout-btn" onclick="logout()">Logout</button>
