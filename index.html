@@ -412,7 +412,7 @@ let isSaving = false;
 let tempCode = "";
 let tempSi = "";
 
-const API_URL = "https://script.google.com/macros/s/AKfycbzo8ahdl6rvya2LTuVQdbQ_2rKi-5Xmj9HtZJzUNwrEaUsntBe0fCugchMJNWzKLpPXCA/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbw9c5N5OuAKUw70ItVizGI-kSlt_HdXk0MORL52IMVBFLWLuDonKGtI_hpC9td1YQHTAA/exec";
 
 /* ================= LOGIN ================= */
 async function sendOTP(){
@@ -782,12 +782,24 @@ window.addEventListener("DOMContentLoaded", function () {
     } else {
 
         // Session expired
-        localStorage.removeItem("inventoryLoggedIn");
-        localStorage.removeItem("inventoryEmail");
-        localStorage.removeItem("loginTime");
-      localStorage.removeItem("sessionId");
+       const email = localStorage.getItem("inventoryEmail");
+const sessionId = localStorage.getItem("sessionId");
 
-        document.getElementById("loginScreen").style.display = "flex";
+if (email && sessionId) {
+    fetch(
+        API_URL +
+        "?action=logout" +
+        "&email=" + encodeURIComponent(email) +
+        "&sessionId=" + encodeURIComponent(sessionId)
+    );
+}
+
+localStorage.removeItem("inventoryLoggedIn");
+localStorage.removeItem("inventoryEmail");
+localStorage.removeItem("loginTime");
+localStorage.removeItem("sessionId");
+
+document.getElementById("loginScreen").style.display = "flex";
     }
 
 });
