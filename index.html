@@ -431,18 +431,32 @@ const data=await res.json();
 
 if(data.status==="OTP_SENT"){
 
-document.getElementById("loginStatus").innerText=
-"OTP sent to Gmail";
+  document.getElementById("loginStatus").innerText =
+  "✅ OTP sent to Gmail";
 
-
-document.getElementById("otp").style.display="block";
-document.getElementById("verifyBtn").style.display="block";
+  document.getElementById("otp").style.display="block";
+  document.getElementById("verifyBtn").style.display="block";
 
 }
+
+else if(data.status==="ALREADY_LOGGED_IN"){
+
+  document.getElementById("loginStatus").innerText =
+  "❌ This Gmail is already logged in on another device.";
+
+}
+
+else if(data.status==="EMAIL_DENIED"){
+
+  document.getElementById("loginStatus").innerText =
+  "❌ Gmail not allowed.";
+
+}
+
 else{
 
-document.getElementById("loginStatus").innerText=
-"❌ Gmail not allowed";
+  document.getElementById("loginStatus").innerText =
+  "❌ Login error.";
 
 }
 
