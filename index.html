@@ -563,6 +563,34 @@ else if (data.status === "ALREADY_LOGGED_IN") {
   }
 
 }
+else if (data.status === "INVALID") {
+
+  document.getElementById("loginStatus").innerHTML =
+  `
+  <div style="
+    color:#d32f2f;
+    margin-top:15px;
+    font-weight:bold;
+  ">
+  ❌ Wrong OTP. Please check and try again.
+  </div>
+  `;
+
+}
+else {
+
+  document.getElementById("loginStatus").innerHTML =
+  `
+  <div style="
+    color:#d32f2f;
+    margin-top:15px;
+    font-weight:bold;
+  ">
+  ❌ Login failed.
+  </div>
+  `;
+
+}
 }
 
   async function forceLogin() {
