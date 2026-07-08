@@ -763,40 +763,45 @@ async function logout() {
 
 }
 
-window.addEventListener("DOMContentLoaded", function () {
-
+window.addEventListener("DOMContentLoaded", async function(){
 
   const email = localStorage.getItem("inventoryEmail");
   const sessionId = localStorage.getItem("sessionId");
 
 
-  // REMOVE SERVER SESSION
   if(email && sessionId){
 
-    fetch(
+    const res = await fetch(
       API_URL +
-      "?action=logout" +
+      "?action=checkSession" +
       "&email=" + encodeURIComponent(email) +
       "&sessionId=" + encodeURIComponent(sessionId)
     );
 
+
+    const data = await res.json();
+
+
+    if(data.status === "VALID"){
+
+      document.getElementById("loginScreen").style.display="none";
+      document.getElementById("app").style.display="block";
+
+      return;
+
+    }
+
   }
 
 
-  // CLEAR BROWSER SESSION
-  localStorage.removeItem("inventoryLoggedIn");
-  localStorage.removeItem("inventoryEmail");
-  localStorage.removeItem("loginTime");
-  localStorage.removeItem("sessionId");
+  // INVALID SESSION
+  localStorage.clear();
 
-
-  // SHOW LOGIN
   document.getElementById("loginScreen").style.display="flex";
   document.getElementById("app").style.display="none";
 
 
 });
-
 </script>
 
 </body>
