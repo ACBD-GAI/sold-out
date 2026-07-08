@@ -763,43 +763,44 @@ async function logout() {
 
 }
 
-window.addEventListener("DOMContentLoaded", function () {
+window.addEventListener("DOMContentLoaded", async function () {
 
-    const loggedIn = localStorage.getItem("inventoryLoggedIn") === "true";
-    const loginTime = Number(localStorage.getItem("loginTime"));
+  const email = localStorage.getItem("inventoryEmail");
+  const sessionId = localStorage.getItem("sessionId");
 
-  const SESSION_TIME = 12 * 60 * 60 * 1000;
 
-    if (
-        loggedIn &&
-        loginTime &&
-        (Date.now() - loginTime) < SESSION_TIME
-    ) {
+  if (email && sessionId) {
 
-        document.getElementById("app").style.display = "block";
-
-    } else {
-
-        // Session expired
-       const email = localStorage.getItem("inventoryEmail");
-const sessionId = localStorage.getItem("sessionId");
-
-if (email && sessionId) {
-    fetch(
-        API_URL +
-        "?action=logout" +
-        "&email=" + encodeURIComponent(email) +
-        "&sessionId=" + encodeURIComponent(sessionId)
+    const res = await fetch(
+      API_URL +
+      "?action=checkSession" +
+      "&email=" + encodeURIComponent(email) +
+      "&sessionId=" + encodeURIComponent(sessionId)
     );
-}
 
-localStorage.removeItem("inventoryLoggedIn");
-localStorage.removeItem("inventoryEmail");
-localStorage.removeItem("loginTime");
-localStorage.removeItem("sessionId");
 
-document.getElementById("loginScreen").style.display = "flex";
+    const data = await res.json();
+
+
+    if (data.status === "VALID") {
+
+      document.getElementById("app").style.display = "block";
+      return;
+
     }
+
+  }
+
+
+  // INVALID SESSION
+  localStorage.removeItem("inventoryLoggedIn");
+  localStorage.removeItem("inventoryEmail");
+  localStorage.removeItem("loginTime");
+  localStorage.removeItem("sessionId");
+
+
+  document.getElementById("loginScreen").style.display = "flex";
+
 
 });
 
