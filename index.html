@@ -812,7 +812,7 @@ let isSaving = false;
 let tempCode = "";
 let tempSi = "";
 
-const API_URL = "https://script.google.com/macros/s/AKfycbz7-_ZTxxu0s8LMi_bkpxq9ndx6H9FVAvy6IAjUdi-RNlbcUrxF-0gIQksuGnVRTn9obQ/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbx-E-sp2fp_4om8UChskCZwAlM9kPrnp6oPXwEUntZQN0ctE2JhbpF_ZSoJQm7bQiDzog/exec";
 
  function getSessionParams(){
 
@@ -1200,6 +1200,19 @@ async function saveYes() {
   console.log("tempSi:", tempSi);
   console.log("isSaving:", isSaving);
 
+  if(!tempCode || !tempSi){
+
+  alert(
+    "Missing data\nBarcode: " + tempCode +
+    "\nSI: " + tempSi
+  );
+
+  return;
+
+}
+
+  
+
   if (isSaving) return;
 
   isSaving = true;
@@ -1432,13 +1445,13 @@ ${data.colJ ?
 
 
 <button 
+id="saveBtn"
 class="btn-blue"
 onclick="saveYes()">
 
 ADD TO SOLD
 
 </button>
-
 
 <button 
 class="btn-orange"
