@@ -1194,47 +1194,92 @@ for (let d of devices) {
 }
 
 async function saveYes() {
+
+  console.log("========== saveYes() ==========");
+  console.log("tempCode:", tempCode);
+  console.log("tempSi:", tempSi);
+  console.log("isSaving:", isSaving);
+
   if (isSaving) return;
+
   isSaving = true;
 
-  document.getElementById("saveBtn").disabled = true;
-  document.getElementById("result").innerHTML = `
-  <div class="card saving">
-    <div class="spinner"></div>
-    <div class="saving-text">Saving data...</div>
-  </div>
-`;
 
-  const res = await fetch(
-  API_URL +
-  "?action=save" +
-  "&barcode=" + encodeURIComponent(tempCode) +
-  "&siNo=" + encodeURIComponent(tempSi) +
-  getSessionParams()
-);
+  const saveBtn = document.getElementById("saveBtn");
 
-  const data = await res.json();
+  if(saveBtn){
+    saveBtn.disabled = true;
+  }
 
-  let row = data.row || [];
-  let colJ = data.colJ || row?.[9] || "";
-  let colO = data.colO || row?.[14] || "";
 
   document.getElementById("result").innerHTML = `
-    <div class="card green scan-animate">
-  <div>✅ ${data.status}</div>
-  <br>
-
-  <b style="font-size:16px;">${colO}</b><br>
-
-  ${colJ ? `<small style="color:#666;">${colJ}</small><br>` : ""}
-
-  <div style="margin-top:12px; font-size:14px; letter-spacing:1px;">
-    🏷️ ${tempCode}
-  </div>
-</div>
+    <div class="card saving">
+      <div class="spinner"></div>
+      <div class="saving-text">
+        Saving data...
+      </div>
+    </div>
   `;
 
+
+  try {
+
+    const res = await fetch(
+      API_URL +
+      "?action=save" +
+      "&barcode=" + encodeURIComponent(tempCode) +
+      "&siNo=" + encodeURIComponent(tempSi) +
+      getSessionParams()
+    );
+
+
+    const data = await res.json();
+
+
+    let row = data.row || [];
+    let colJ = data.colJ || row?.[9] || "";
+    let colO = data.colO || row?.[14] || "";
+
+
+    document.getElementById("result").innerHTML = `
+      <div class="card green scan-animate">
+
+        <div>✅ ${data.status}</div>
+
+        <br>
+
+        <b style="font-size:16px;">
+          ${colO}
+        </b>
+
+        <br>
+
+        ${colJ ? `<small style="color:#666;">${colJ}</small><br>` : ""}
+
+        <div style="margin-top:12px;font-size:14px;">
+          🏷️ ${tempCode}
+        </div>
+
+      </div>
+    `;
+
+
+  } catch(err){
+
+    console.error(err);
+
+    document.getElementById("result").innerHTML = `
+      <div class="card red">
+        ❌ SAVE ERROR<br><br>
+        ${err.message}
+      </div>
+    `;
+
+  }
+
+
   isSaving = false;
+
 }
 
 async function searchSI() {
