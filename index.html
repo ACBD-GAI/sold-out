@@ -436,8 +436,12 @@ VERIFY OTP
     <button id="scanBtn" class="btn-blue" onclick="toggleScan()">📷 START SCAN</button>
     <button class="btn-blue" onclick="searchSI()">🔍 SEARCH SI</button>
     <button class="btn-orange" onclick="refreshPage()">♻ REFRESH</button>.
-    <button class="btn-blue" onclick="sendReport()">
-    📧 SEND REPORT
+  <button 
+id="reportBtn"
+class="btn-blue"
+onclick="sendReport()"
+style="display:none;">
+📧 SEND REPORT
 </button>
 
     <p id="result"></p>
@@ -467,6 +471,34 @@ const API_URL = "https://script.google.com/macros/s/AKfycbyI81fCLuBklPuPEoz6p35s
   );
 
 }
+function checkReportAccess(){
+
+  const email = localStorage
+    .getItem("inventoryEmail")
+    ?.toLowerCase();
+
+
+ const reportBtn =
+    document.getElementById("reportBtn");
+
+if(!reportBtn) return;
+
+
+  if(
+    email === "remnvill@gmail.com"
+  ){
+
+    reportBtn.style.display = "block";
+
+  }
+  else{
+
+    reportBtn.style.display = "none";
+
+  }
+
+}
+  
 
 /* ================= LOGIN ================= */
 async function sendOTP(){
@@ -553,7 +585,8 @@ if (data.status === "OK") {
 
   document.getElementById("loginScreen").style.display = "none";
   document.getElementById("app").style.display = "block";
-
+checkReportAccess();
+  
 }
 else if (data.status === "ALREADY_LOGGED_IN") {
 
@@ -619,6 +652,7 @@ else {
 
     document.getElementById("loginScreen").style.display = "none";
     document.getElementById("app").style.display = "block";
+    checkReportAccess();
 
   } else {
 
@@ -627,6 +661,8 @@ else {
   }
 
 }
+
+  
 
 
 function setUIScanning(state) {
@@ -974,6 +1010,7 @@ window.addEventListener("DOMContentLoaded", async function(){
       // KEEP LOGIN
       document.getElementById("loginScreen").style.display="none";
       document.getElementById("app").style.display="block";
+      checkReportAccess();
 
     }
     else {
