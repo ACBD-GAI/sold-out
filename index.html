@@ -454,7 +454,7 @@ let isSaving = false;
 let tempCode = "";
 let tempSi = "";
 
-const API_URL = "https://script.google.com/macros/s/AKfycbwFwi7iwAF0uRCiDrxC-EYb0DSOxDvP6kCsvmrHoEqqvWSa9cnRBjJH-vVc0hdfe05kww/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbyZ8s_RGm1xUCv7HL8lqdjguaR1pRfB0s4fzoIGZkG5nJTyVi0Lf8UG0MC0EKLFKJTL8w/exec";
 
   function getSessionParams(){
 
@@ -1017,7 +1017,13 @@ window.addEventListener("DOMContentLoaded", async function(){
 
         const data = await res.json();
 
-        alert(data.status);
+        alert(
+    data.status +
+    "\n\n" +
+    "Total Stocks: " + data.totalStocks +
+    "\n" +
+    "Total Sold: " + data.totalSold
+);
 
     } catch (err) {
 
