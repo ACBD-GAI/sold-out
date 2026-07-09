@@ -665,8 +665,18 @@ VERIFY OTP
     <input id="siNo" placeholder="Enter SI No">
 
     <button id="scanBtn" class="btn-blue" onclick="toggleScan()">📷 START SCAN</button>
-    <button class="btn-blue" onclick="searchSI()">🔍 SEARCH SI</button>
-    <button class="btn-orange" onclick="refreshPage()">♻ REFRESH</button>
+
+<button 
+id="tagBtn"
+class="btn-blue"
+onclick="showTagDialog()"
+disabled>
+🏷 ADD VIA TAG NUMBER
+</button>
+
+<button class="btn-blue" onclick="searchSI()">🔍 SEARCH SI</button>
+
+<button class="btn-orange" onclick="refreshPage()">♻ REFRESH</button>
 <button
 id="reportBtn"
 class="btn-blue"
@@ -744,10 +754,49 @@ style="display:none;">
         </button>
 
         <button class="cancel-report-btn" onclick="closeReportDialog()">
-            CANCEL
-        </button>
+CANCEL
+</button>
 
-    </div>
+</div>
+</div>
+
+
+<div id="tagDialog" class="report-overlay">
+
+<div class="report-modal">
+
+<div class="report-title">
+🏷 Tag Number Search
+</div>
+
+<div class="report-subtitle">
+Enter Tag Number (Column M)
+</div>
+
+
+<input 
+id="tagNumberInput"
+placeholder="Enter Tag Number"
+>
+
+
+<button 
+class="send-report-btn"
+onclick="searchTagNumber()">
+SEARCH
+</button>
+
+
+<button 
+class="cancel-report-btn"
+onclick="closeTagDialog()">
+CANCEL
+</button>
+
+
+</div>
+
+</div>
 
 </div>
   
@@ -763,7 +812,7 @@ let isSaving = false;
 let tempCode = "";
 let tempSi = "";
 
-const API_URL = "https://script.google.com/macros/s/AKfycbybGkVChSmD8N86tevsVGipF280CGitDHKour4RhNirm7WhAbjIrpQzxkkQ3lonkGIfEQ/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbxkuMLB-Lh_R9oXZbJdHChBukqPS_rPvxp_t52_VlZNoz7v7CbypAd9m0gXFvoNxs2xaA/exec";
 
  function getSessionParams(){
 
@@ -1238,10 +1287,150 @@ function cancelNo() {
 }
 
 function refreshPage() {
+  document.getElementById("tagNumberInput").value="";
+
   document.getElementById("siNo").value = "";
+
+  const tagBtn = document.getElementById("tagBtn");
+
+  if(tagBtn){
+    tagBtn.disabled = true;
+    tagBtn.style.opacity = "0.5";
+  }
+
   clearUI();
+
+}
+function showTagDialog(){
+
+document.getElementById("tagDialog").style.display="flex";
+
 }
 
+
+function closeTagDialog(){
+
+document.getElementById("tagDialog").style.display="none";
+
+}
+
+
+async function searchTagNumber(){
+
+const tag =
+document.getElementById("tagNumberInput")
+.value.trim();
+
+
+const siNo =
+document.getElementById("siNo")
+.value.trim();
+
+
+
+if(!siNo){
+
+alert("Enter SI No first");
+return;
+
+}
+
+
+if(!tag){
+
+alert("Enter Tag Number");
+return;
+
+}
+
+
+
+const res = await fetch(
+API_URL+
+"?action=checkTag"+
+"&tag="+encodeURIComponent(tag)+
+getSessionParams()
+);
+
+
+const data = await res.json();
+
+
+
+if(data.status==="FOUND"){
+
+
+tempCode=data.barcode;
+tempSi=siNo;
+
+
+
+document.getElementById("result").innerHTML=`
+
+<div class="card green scan-animate">
+
+✅ AVAILABLE<br><br>
+
+<b>${data.colO}</b><br>
+
+${data.colJ ?
+`<small>${data.colJ}</small><br>`
+:""
+}
+
+
+🏷 TAG:
+<b>${tag}</b>
+
+
+<br><br>
+
+
+<button 
+class="btn-blue"
+onclick="saveYes()">
+
+ADD TO SOLD
+
+</button>
+
+
+<button 
+class="btn-orange"
+onclick="cancelNo()">
+
+CANCEL
+
+</button>
+
+
+</div>
+
+`;
+
+closeTagDialog();
+
+
+}
+
+else{
+
+
+document.getElementById("result").innerHTML=`
+
+<div class="no-results">
+
+❌ TAG NUMBER NOT FOUND
+
+</div>
+
+`;
+
+}
+
+
+}
+  
 
 
 let audioCtx = null;
@@ -1394,6 +1583,28 @@ window.addEventListener("DOMContentLoaded", async function(){
 
   }
 
+
+});
+
+
+  const siInput = document.getElementById("siNo");
+
+siInput.addEventListener("input",function(){
+
+const btn=document.getElementById("tagBtn");
+
+if(this.value.trim()==""){
+
+btn.disabled=true;
+btn.style.opacity="0.5";
+
+}
+else{
+
+btn.disabled=false;
+btn.style.opacity="1";
+
+}
 
 });
 
