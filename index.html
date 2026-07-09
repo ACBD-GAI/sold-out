@@ -458,7 +458,7 @@ let isSaving = false;
 let tempCode = "";
 let tempSi = "";
 
-const API_URL = "https://script.google.com/macros/s/AKfycbyTrKWuCjvulhOw0qZh4zKtAKz85ttZVsc7lCWuxiIw2pFSodkUoze1TsBCjt1wuQIcRg/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbwWHNBhswMwtF5QjEwJuedxAYM7dPnlzm_zgpimwbm-kPmtvNrXJ9WeL27mhFeXLz4F/exec";
 
   function getSessionParams(){
 
@@ -478,15 +478,21 @@ function checkReportAccess(){
     ?.toLowerCase();
 
 
- const reportBtn =
+  const reportBtn =
     document.getElementById("reportBtn");
 
-if(!reportBtn) return;
+
+  if(!reportBtn) return;
 
 
-  if(
-    email === "remnvill@gmail.com"
-  ){
+  const REPORT_USERS = [
+    "remnvill@gmail.com",
+    "willremn@gmail.com",
+    "dremnvill32@gmail.com"
+  ];
+
+
+  if(REPORT_USERS.includes(email)){
 
     reportBtn.style.display = "block";
 
