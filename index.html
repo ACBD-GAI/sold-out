@@ -224,8 +224,12 @@ button:active {
 
   /* ================= LOGIN DESIGN ================= */
 
+  
+
 #loginScreen {
   background: linear-gradient(135deg, #e3f2fd, #bbdefb) !important;
+   position:fixed;
+  overflow:hidden;
 }
 
 
@@ -238,8 +242,13 @@ button:active {
   background: white;
   border-radius: 25px;
   box-shadow: 0 15px 40px rgba(0,0,0,0.15);
-  z-index: -1;
+  z-index: 0;
 }
+#loginScreen > * {
+  position: relative;
+  z-index: 1;
+}
+  
 
 
 /* TITLE */
@@ -435,7 +444,7 @@ VERIFY OTP
 
     <button id="scanBtn" class="btn-blue" onclick="toggleScan()">📷 START SCAN</button>
     <button class="btn-blue" onclick="searchSI()">🔍 SEARCH SI</button>
-    <button class="btn-orange" onclick="refreshPage()">♻ REFRESH</button>.
+    <button class="btn-orange" onclick="refreshPage()">♻ REFRESH</button>
   <button 
 id="reportBtn"
 class="btn-blue"
@@ -458,12 +467,12 @@ let isSaving = false;
 let tempCode = "";
 let tempSi = "";
 
-const API_URL = "https://script.google.com/macros/s/AKfycbzF6autv6gZez3b6fPwkxDhFTHqAwWxJQgAdsBhhhlarTRuYQ1mnM5xPKLCOXE-fM0F0A/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbzTIqJLmzQRhT5B316s6Qr1VdkHC7BCu2aM1TwTmWO4bDv9o_hU2yOjfWgDVmFUNQpnaw/exec";
 
-  function getSessionParams(){
+ function getSessionParams(){
 
-  const email = localStorage.getItem("inventoryEmail");
-  const sessionId = localStorage.getItem("sessionId");
+  const email = localStorage.getItem("inventoryEmail") || "";
+  const sessionId = localStorage.getItem("sessionId") || "";
 
   return (
     "&email=" + encodeURIComponent(email) +
@@ -528,11 +537,25 @@ const data=await res.json();
 
     if (data.alreadyLoggedIn) {
 
-        document.getElementById("loginStatus").innerHTML =
+document.getElementById("loginStatus").innerHTML =
 `
 <div class="login-warning">
-⚠ Account already logged in.<br>
-Force Logout Device.
+⚠ Account already logged in.<br><br>
+
+<button 
+onclick="forceLogin()"
+style="
+background:#ff9800;
+color:white;
+padding:10px 20px;
+border:none;
+border-radius:10px;
+font-weight:bold;
+cursor:pointer;
+">
+FORCE LOGOUT OTHER DEVICE
+</button>
+
 </div>
 `;
 
@@ -714,12 +737,15 @@ async function toggleScan() {
   setUIScanning(true);
 
   const devices = await Html5Qrcode.getCameras();
-  let cameraId = devices[0].id;
 
-  for (let d of devices) {
-    const label = (d.label || "").toLowerCase();
-    if (label.includes("back") || label.includes("rear")) {
-      cameraId = d.id;
+if(!devices.length){
+  alert("No camera detected");
+  isScanning=false;
+  setUIScanning(false);
+  return;
+}
+
+let cameraId = devices[0].id;
       break;
     }
   }
