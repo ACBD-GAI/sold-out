@@ -736,19 +736,25 @@ async function toggleScan() {
   isScanning = true;
   setUIScanning(true);
 
-  const devices = await Html5Qrcode.getCameras();
+const devices = await Html5Qrcode.getCameras();
 
 if(!devices.length){
   alert("No camera detected");
-  isScanning=false;
+  isScanning = false;
   setUIScanning(false);
   return;
 }
 
 let cameraId = devices[0].id;
-      break;
-    }
+
+for (let d of devices) {
+  const label = (d.label || "").toLowerCase();
+
+  if (label.includes("back") || label.includes("rear")) {
+    cameraId = d.id;
+    break;
   }
+}
 
   scanner = new Html5Qrcode("reader");
 
