@@ -389,8 +389,7 @@ display:none;
 justify-content:center;
 align-items:center;
 
-background:rgba(0,0,0,.45);
-backdrop-filter:blur(6px);
+
 
 z-index:99999;
 
@@ -812,7 +811,7 @@ let isSaving = false;
 let tempCode = "";
 let tempSi = "";
 
-const API_URL = "https://script.google.com/macros/s/AKfycbyhufJE2gsc4X2p16N13nKNywm9eg6igOnbVHDG9IfY1Ud2WjT3_2u4OsWrFWGZPIGmJQ/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbxC4-ttlk-oyhuDFIi606Amb0i0FI0XIbIv1BurSJo8DmKon-iZPTXhSWc9uikKrlf1ug/exec";
 
  function getSessionParams(){
 
@@ -917,8 +916,14 @@ if (data.status === "OTP_SENT") {
     }
 
 
-    document.getElementById("otp").style.display = "block";
-    document.getElementById("verifyBtn").style.display = "block";
+    const otpBox = document.getElementById("otp");
+
+otpBox.style.display = "block";
+document.getElementById("verifyBtn").style.display = "block";
+
+// Automatically place the cursor in the OTP field
+otpBox.focus();
+otpBox.select();
 
 
 }
@@ -1192,7 +1197,6 @@ for (let d of devices) {
     }
   );
 }
-
 async function saveYes() {
 
   console.log("========== saveYes() ==========");
@@ -1213,16 +1217,18 @@ async function saveYes() {
 
   
 
-  if (isSaving) return;
+if (isSaving) return;
 
-  isSaving = true;
+isSaving = true;
 
+const saveBtn = document.getElementById("saveBtn");
 
-  const saveBtn = document.getElementById("saveBtn");
-
-  if(saveBtn){
-    saveBtn.disabled = true;
-  }
+if (saveBtn) {
+  saveBtn.disabled = true;
+  saveBtn.innerHTML = "⏳ SAVING...";
+  saveBtn.style.opacity = "0.6";
+  saveBtn.style.cursor = "not-allowed";
+}
 
 
   document.getElementById("result").innerHTML = `
@@ -1276,6 +1282,7 @@ async function saveYes() {
       </div>
     `;
 
+    
 
   } catch(err){
 
@@ -1344,11 +1351,33 @@ function cancelNo() {
 `;
 }
 
-function refreshPage() {
-  document.getElementById("tagNumberInput").value="";
+async function refreshPage() {
+
+  // Stop camera if still running
+  if(scanner){
+    try{
+      await scanner.stop();
+      await scanner.clear();
+    }
+    catch(e){
+      console.log(e);
+    }
+
+    scanner = null;
+  }
+
+  isScanning = false;
+
+  setUIScanning(false);
+
+
+  // Clear inputs
+  document.getElementById("tagNumberInput").value = "";
 
   document.getElementById("siNo").value = "";
 
+
+  // Disable tag button
   const tagBtn = document.getElementById("tagBtn");
 
   if(tagBtn){
@@ -1356,12 +1385,19 @@ function refreshPage() {
     tagBtn.style.opacity = "0.5";
   }
 
+
+  // Clear results
   clearUI();
+
+
+  // Put cursor back to SI
+  document.getElementById("siNo").focus();
 
 }
 function showTagDialog(){
 
-document.getElementById("tagDialog").style.display="flex";
+    document.getElementById("tagNumberInput").value = "";
+    document.getElementById("tagDialog").style.display = "flex";
 
 }
 
@@ -1375,53 +1411,68 @@ document.getElementById("tagDialog").style.display="none";
 
 async function searchTagNumber(){
 
+
 const tag =
 document.getElementById("tagNumberInput")
 .value.trim();
-
 
 const siNo =
 document.getElementById("siNo")
 .value.trim();
 
-
-
 if(!siNo){
-
-alert("Enter SI No first");
-return;
-
+  alert("Enter SI No first");
+  return;
 }
-
 
 if(!tag){
-
-alert("Enter Tag Number");
-return;
-
+  alert("Enter Tag Number");
+  return;
 }
 
-
-
 const res = await fetch(
-API_URL+
-"?action=checkTag"+
-"&tag="+encodeURIComponent(tag)+
-getSessionParams()
+  API_URL +
+  "?action=checkTag" +
+  "&tag=" + encodeURIComponent(tag) +
+  getSessionParams()
 );
-
 
 const data = await res.json();
 
 
+// ================= DUPLICATE =================
+if(data.status==="DUPLICATE"){
 
+document.getElementById("result").innerHTML=`
+
+<div class="card red">
+
+🛑 ALREADY SOLD
+
+<br><br>
+
+<b>${data.colO}</b><br>
+
+${data.colJ ? `<small>${data.colJ}</small><br>` : ""}
+
+🏷 TAG:
+<b>${tag}</b>
+
+</div>
+
+`;
+
+closeTagDialog();
+return;
+
+}
+
+
+// ================= FOUND =================
 if(data.status==="FOUND"){
-
 
 tempCode=data.barcode;
 tempSi=siNo;
-
-
 
 document.getElementById("result").innerHTML=`
 
@@ -1431,20 +1482,14 @@ document.getElementById("result").innerHTML=`
 
 <b>${data.colO}</b><br>
 
-${data.colJ ?
-`<small>${data.colJ}</small><br>`
-:""
-}
-
+${data.colJ ? `<small>${data.colJ}</small><br>` : ""}
 
 🏷 TAG:
 <b>${tag}</b>
 
-
 <br><br>
 
-
-<button 
+<button
 id="saveBtn"
 class="btn-blue"
 onclick="saveYes()">
@@ -1453,7 +1498,7 @@ ADD TO SOLD
 
 </button>
 
-<button 
+<button
 class="btn-orange"
 onclick="cancelNo()">
 
@@ -1461,18 +1506,17 @@ CANCEL
 
 </button>
 
-
 </div>
 
 `;
 
 closeTagDialog();
-
+return;
 
 }
 
-else{
 
+// ================= NOT FOUND =================
 
 document.getElementById("result").innerHTML=`
 
@@ -1484,11 +1528,9 @@ document.getElementById("result").innerHTML=`
 
 `;
 
-}
+closeTagDialog();
 
-
-}
-  
+}  
 
 
 let audioCtx = null;
@@ -1523,8 +1565,27 @@ document.addEventListener("click", initAudio, { once: true });
 
 async function logout() {
 
+
+  // STOP CAMERA FIRST
+  if(scanner){
+    try{
+      await scanner.stop();
+      await scanner.clear();
+    }
+    catch(e){
+      console.log("Camera stop error:", e);
+    }
+
+    scanner = null;
+  }
+
+
+  isScanning = false;
+
+
   const email = localStorage.getItem("inventoryEmail");
   const sessionId = localStorage.getItem("sessionId");
+
 
   try {
 
@@ -1536,13 +1597,17 @@ async function logout() {
     );
 
   } catch (e) {
+
     console.log(e);
+
   }
+
 
   localStorage.removeItem("inventoryLoggedIn");
   localStorage.removeItem("inventoryEmail");
   localStorage.removeItem("loginTime");
   localStorage.removeItem("sessionId");
+
 
   location.reload();
 
@@ -1558,8 +1623,7 @@ function checkLoginExpiry(){
 
   const now = Date.now();
 
-  const maxTime = 13 * 60 * 60 * 1000; // 8 hours
-
+  const maxTime = 13 * 60 * 60 * 1000; // 13 hours
   if(now - Number(loginTime) > maxTime){
 
     localStorage.removeItem("inventoryLoggedIn");
@@ -1574,6 +1638,13 @@ function checkLoginExpiry(){
   }
 
 }
+  document.getElementById("email").addEventListener("keydown",e=>{
+    if(e.key==="Enter") sendOTP();
+});
+
+document.getElementById("otp").addEventListener("keydown",e=>{
+    if(e.key==="Enter") verifyOTP();
+});
   
 
 window.addEventListener("DOMContentLoaded", async function(){
@@ -1666,7 +1737,12 @@ btn.style.opacity="1";
 
 });
 
- function showReportDialog() {
+function showReportDialog() {
+
+    // Clear previous selections
+    document.querySelectorAll(".recipient-card").forEach(card => {
+        card.classList.remove("selected");
+    });
 
     document.getElementById("reportDialog").style.display = "flex";
 
@@ -1710,6 +1786,9 @@ async function sendSelectedReport() {
 
 
     closeReportDialog();
+  document.querySelectorAll(".recipient-card").forEach(card=>{
+    card.classList.remove("selected");
+});
 
 
     showReportMessage(`
@@ -1780,6 +1859,8 @@ async function sendSelectedReport() {
   `;
 
 }
+
+  
 
   
 </script>
